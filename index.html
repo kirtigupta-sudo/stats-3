@@ -1,1 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>From Sample to Estimate — Sampling & Confidence Intervals</title>
+  <style>
+    :root {
+      --ink: #17252f;
+      --muted: #526772;
+      --paper: #f5f8f5;
+      --white: #ffffff;
+      --teal: #126c69;
+      --teal-dark: #0b504f;
+      --mint: #dcefeb;
+      --coral: #c3513c;
+      --coral-pale: #fae9e3;
+      --gold: #e1ad4f;
+      --line: #d4dfda;
+      --blue: #476f9a;
+      --shadow: 0 16px 42px rgba(23, 37, 47, .08);
+      --serif: Georgia, "Times New Roman", serif;
+      --sans: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
 
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: var(--sans);
+      line-height: 1.65;
+    }
+    a { color: var(--teal-dark); }
+    button, input, select { font: inherit; }
+    :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+
+    .topbar {
+      padding: 13px 5vw;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 18px;
+      color: #eaf4f1;
+      background: var(--teal-dark);
+      font-size: .84rem;
+      letter-spacing: .04em;
+    }
+    .topbar strong { font-weight: 700; }
+    .topbar span:last-child { color: #b5d7d1; }
+
+    main { max-width: 1120px; padding: 0 28px; margin: auto; }
+    .hero {
+      position: relative;
+      padding: 78px 0 58px;
+      display: grid;
+      grid-template-columns: minmax(0, 1.25fr) minmax(260px, .75fr);
+      gap: 52px;
+      align-items: center;
+    }
+    .eyebrow {
+      color: var(--teal);
+      font-size: .76rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3 { margin-top: 0; line-height: 1.13; }
+    h1 {
+      max-width: 730px;
+      margin: 13px 0 20px;
+      font: 500 clamp(2.8rem, 6vw, 5.35rem)/.99 var(--serif);
+      letter-spacing: -.045em;
+    }
+    .hero p { max-width: 690px; color: var(--muted); font-size: 1.08rem; }
+    .hero-mark {
+      min-height: 285px;
+      padding: 26px;
+      border-radius: 46% 46% 18px 18px;
+      background:
+        radial-gradient(ellipse at 50% 85%, rgba(18,108,105,.17), transparent 52%),
+        var(--mint);
+      display: grid;
+      place-items: center;
+    }
+    .hero-mark svg { width: 100%; max-width: 350px; height: auto; }
+    .hero-mark .caption {
+      margin: -2px 0 0;
+      color: var(--teal-dark);
+      font: italic 1rem var(--serif);
+      text-align: center;
+    }
+
+    .lesson-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 0 0 32px;
+    }
+    .lesson-nav a {
+      padding: 7px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: rgba(255,255,255,.6);
+      font-size: .8rem;
+      text-decoration: none;
+    }
+    .lesson-nav a:hover { color: var(--teal-dark); border-color: var(--teal); }
+
+    section.lesson {
+      margin: 0 0 30px;
+      padding: clamp(25px, 5vw, 52px);
+      border: 1px solid #e2e9e5;
+      border-radius: 18px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+    .section-head {
+      display: grid;
+      grid-template-columns: 60px 1fr;
+      gap: 17px;
+      align-items: start;
+      margin-bottom: 29px;
+    }
+    .section-number {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--mint);
+      color: var(--teal-dark);
+      font: 1.05rem var(--mono);
+    }
+    h2 { margin-bottom: 9px; font: 500 clamp(1.9rem, 3.5vw, 2.8rem) var(--serif); letter-spacing: -.025em; }
+    .section-head p { margin: 0; max-width: 760px; color: var(--muted); }
+    h3 { margin: 0 0 10px; font-size: 1.2rem; }
+    p { margin: 0 0 14px; }
+    .muted { color: var(--muted); }
+    .small { font-size: .9rem; }
+    .two-col, .three-col {
+      display: grid;
+      gap: 18px;
+      align-items: start;
+    }
+    .two-col { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .three-col { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .panel {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: #fbfcfb;
+    }
+    .panel.tint { background: #edf6f3; border-color: #cce2dc; }
+    .panel.warm { background: #fff6eb; border-color: #eed8b6; }
+    .panel.alert { background: var(--coral-pale); border-color: #efc9bd; }
+    .formula {
+      overflow-x: auto;
+      margin: 14px 0;
+      padding: 14px 16px;
+      border-left: 4px solid var(--teal);
+      background: #f0f6f4;
+      font: 1.04rem/1.75 var(--mono);
+      white-space: normal;
+    }
+    .formula .sub { font-size: .82em; }
+    .tag {
+      display: inline-block;
+      margin: 0 5px 7px 0;
+      padding: 3px 9px;
+      border-radius: 999px;
+      color: var(--teal-dark);
+      background: var(--mint);
+      font-size: .76rem;
+      font-weight: 700;
+    }
+    .table-wrap { overflow-x: auto; margin: 14px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: .91rem; }
+    th, td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; }
+    th { color: var(--teal-dark); background: #edf6f3; font-size: .8rem; letter-spacing: .035em; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    tr:last-child td { border-bottom: 0; }
+    .step {
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      gap: 12px;
+      margin: 13px 0;
+    }
+    .step b.index {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: white;
+      background: var(--teal);
+      font-size: .82rem;
+    }
+    .step p { margin: 2px 0 0; }
+    .callout {
+      margin: 18px 0;
+      padding: 17px 19px;
+      border-radius: 11px;
+      background: #f2f6f5;
+      color: var(--ink);
+    }
+    .callout strong { color: var(--teal-dark); }
+    .trap {
+      padding: 18px;
+      border-left: 4px solid var(--coral);
+      border-radius: 0 10px 10px 0;
+      background: #fff5f1;
+    }
+    .trap strong { color: #9b392b; }
+    .control-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 22px; }
+    .control label { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 7px; font-weight: 700; }
+    .control output { color: var(--teal-dark); font-family: var(--mono); }
+    input[type="range"] { width: 100%; accent-color: var(--teal); }
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #b8cbc4;
+      border-radius: 8px;
+      background: white;
+      color: var(--ink);
+    }
+    .result-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 19px;
+    }
+    .result {
+      padding: 14px;
+      border-radius: 10px;
+      background: #edf6f3;
+    }
+    .result span { display: block; color: var(--muted); font-size: .76rem; }
+    .result strong { display: block; margin-top: 4px; color: var(--teal-dark); font: 1.12rem var(--mono); }
+    .viz {
+      width: 100%;
+      min-height: 230px;
+      display: block;
+      border-radius: 12px;
+      background: #fcfdfc;
+      border: 1px solid var(--line);
+    }
+    .viz-caption { margin: 9px 0 0; color: var(--muted); font-size: .81rem; }
+    .ci-visual { padding: 20px 10px 11px; }
+    .interval-row {
+      display: grid;
+      grid-template-columns: 120px 1fr 86px;
+      gap: 13px;
+      align-items: center;
+      margin: 13px 0;
+      font-size: .82rem;
+    }
+    .interval-row .name { font-weight: 700; }
+    .interval-row .track {
+      position: relative;
+      height: 19px;
+      border-radius: 99px;
+      background: #e8eeeb;
+    }
+    .interval-row .bar {
+      position: absolute;
+      top: 5px;
+      height: 9px;
+      border-radius: 99px;
+      background: var(--teal);
+    }
+    .interval-row .bar.contains { background: var(--teal); }
+    .interval-row .bar.misses { background: var(--coral); }
+    .interval-row .truth {
+      position: absolute;
+      top: -5px;
+      width: 2px;
+      height: 29px;
+      background: var(--ink);
+    }
+    .interval-row .bounds { color: var(--muted); text-align: right; font-family: var(--mono); font-size: .75rem; }
+    .axis {
+      display: flex;
+      justify-content: space-between;
+      margin: 8px 120px 0 133px;
+      color: var(--muted);
+      font: .7rem var(--mono);
+    }
+
+    .sampling-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+    .sampling-card { padding: 18px; border: 1px solid var(--line); border-radius: 12px; background: #fbfcfb; }
+    .sampling-card h3 { color: var(--teal-dark); font-size: 1rem; }
+    .sampling-card p { margin: 0; color: var(--muted); font-size: .9rem; }
+    .sampling-card .analogy { margin-top: 10px; color: var(--ink); font-size: .84rem; }
+
+    .interactive {
+      border: 1px solid #cce2dc;
+      border-radius: 14px;
+      padding: 22px;
+      background: linear-gradient(145deg, #f5fbf8, #fff);
+    }
+    .bar-compare {
+      display: grid;
+      grid-template-columns: 140px 1fr 76px;
+      gap: 12px;
+      align-items: center;
+      margin: 15px 0;
+      font-size: .88rem;
+    }
+    .bar-compare .bar-track {
+      height: 22px;
+      background: #e8eeeb;
+      border-radius: 99px;
+      position: relative;
+    }
+    .bar-compare .bar-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      border-radius: 99px;
+      background: var(--teal);
+      transition: width .25s ease;
+    }
+    .bar-compare .bar-value {
+      color: var(--teal-dark);
+      font: .82rem var(--mono);
+      text-align: right;
+    }
+    .distribution-svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      min-height: 250px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fff;
+    }
+    .dist-tabs { display: flex; flex-wrap: wrap; gap: 7px; margin: 12px 0 18px; }
+    .dist-tabs button {
+      padding: 8px 13px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: #fff;
+      cursor: pointer;
+    }
+    .dist-tabs button[aria-pressed="true"] {
+      color: #fff;
+      background: var(--teal);
+      border-color: var(--teal);
+    }
+    .step-reveal {
+      padding: 15px;
+      border-radius: 10px;
+      background: #fff6eb;
+      border: 1px solid #eed8b6;
+    }
+    .lookup-highlight {
+      color: var(--teal-dark);
+      background: var(--gold);
+      font-weight: 800;
+    }
+    .small-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      align-items: start;
+    }
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin: 9px 0 0;
+      color: var(--muted);
+      font-size: .82rem;
+    }
+    .legend span { display: inline-flex; gap: 7px; align-items: center; }
+    .swatch { width: 15px; height: 8px; border-radius: 8px; display: inline-block; }
+    .swatch.teal { background: var(--teal); }
+    .swatch.coral { background: var(--coral); }
+    .swatch.dark { width: 2px; height: 16px; border-radius: 0; background: var(--ink); }
+
+    .footer {
+      padding: 35px 20px 52px;
+      color: var(--muted);
+      text-align: center;
+      font-size: .85rem;
+    }
+
+    @media (max-width: 760px) {
+      main { padding: 0 16px; }
+      .hero { padding: 53px 0 35px; grid-template-columns: 1fr; gap: 15px; }
+      .hero-mark { min-height: 210px; }
+      .hero-mark svg { max-width: 250px; }
+      .two-col, .three-col, .sampling-grid, .small-grid { grid-template-columns: 1fr; }
+      .section-head { grid-template-columns: 45px 1fr; gap: 11px; }
+      .section-number { width: 39px; height: 39px; }
+      .control-grid { grid-template-columns: 1fr; }
+      .result-strip { grid-template-columns: 1fr; }
+      .interval-row { grid-template-columns: 86px 1fr; }
+      .interval-row .bounds { grid-column: 2; text-align: left; }
+      .axis { margin-left: 99px; margin-right: 0; }
+      .topbar { padding: 11px 16px; font-size: .75rem; }
+      .topbar span:last-child { text-align: right; }
+      .bar-compare { grid-template-columns: 100px 1fr 58px; gap: 8px; font-size: .78rem; }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .hero > *, section.lesson { animation: rise .55s both; }
+      section.lesson:nth-of-type(2) { animation-delay: .05s; }
+      section.lesson:nth-of-type(3) { animation-delay: .1s; }
+      section.lesson:nth-of-type(4) { animation-delay: .15s; }
+      @keyframes rise {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <strong>STATISTICS · CLASS 3</strong>
+    <span>Sampling → variation → uncertainty</span>
+  </div>
+
+  <main>
+    <header class="hero">
+      <div>
+        <div class="eyebrow">A practical guide to inference</div>
+        <h1>From a small sample to a careful estimate</h1>
+        <p>
+          You sampled 25 orders and got an average preparation time of 42 minutes.
+          Is that the true average for every order? Probably not exactly. But how far
+          might it be from the truth—and how should you communicate that uncertainty?
+          This lesson builds the answer from the business question upward, then lets
+          you explore how the calculations work.
+        </p>
+      </div>
+      <div class="hero-mark" aria-label="Diagram: population, a sample, and an estimate">
+        <div>
+          <svg viewBox="0 0 360 220" role="img" aria-labelledby="heroTitle">
+            <title id="heroTitle">A sample provides an estimate of a larger population value</title>
+            <g fill="#9bc9bd">
+              <circle cx="38" cy="42" r="7"/><circle cx="72" cy="32" r="7"/><circle cx="106" cy="48" r="7"/>
+              <circle cx="140" cy="35" r="7"/><circle cx="174" cy="49" r="7"/><circle cx="208" cy="33" r="7"/>
+              <circle cx="242" cy="46" r="7"/><circle cx="276" cy="34" r="7"/><circle cx="310" cy="49" r="7"/>
+              <circle cx="48" cy="78" r="7"/><circle cx="82" cy="66" r="7"/><circle cx="116" cy="82" r="7"/>
+              <circle cx="150" cy="68" r="7"/><circle cx="184" cy="84" r="7"/><circle cx="218" cy="68" r="7"/>
+              <circle cx="252" cy="83" r="7"/><circle cx="286" cy="69" r="7"/><circle cx="320" cy="82" r="7"/>
+            </g>
+            <path d="M180 100 L180 124" stroke="#126c69" stroke-width="3" stroke-dasharray="4 5"/>
+            <path d="M173 117 L180 125 L187 117" fill="none" stroke="#126c69" stroke-width="3"/>
+            <rect x="103" y="132" width="154" height="59" rx="19" fill="#126c69"/>
+            <circle cx="132" cy="153" r="6" fill="#e1ad4f"/><circle cx="158" cy="171" r="6" fill="#dcefeb"/>
+            <circle cx="181" cy="151" r="6" fill="#dcefeb"/><circle cx="205" cy="172" r="6" fill="#e1ad4f"/>
+            <circle cx="228" cy="153" r="6" fill="#dcefeb"/>
+            <text x="180" y="210" text-anchor="middle" fill="#0b504f" font-size="12" font-family="sans-serif">sample → estimate + uncertainty</text>
+          </svg>
+          <p class="caption">The sample is evidence, not the whole population.</p>
+        </div>
+      </div>
+    </header>
+
+    <nav class="lesson-nav" aria-label="Lesson sections">
+      <a href="#why">Why intervals?</a>
+      <a href="#sampling">Sampling techniques</a>
+      <a href="#clt">CLT & standard error</a>
+      <a href="#meaning">What 95% means</a>
+      <a href="#critical">Critical values & tables</a>
+      <a href="#compute">Compute an interval</a>
+      <a href="#explorer">Interactive explorer</a>
+      <a href="#check">Confusion traps</a>
+    </nav>
+
+    <section class="lesson" id="why">
+      <div class="section-head">
+        <div class="section-number">01</div>
+        <div>
+          <div class="eyebrow">Start with the business decision</div>
+          <h2>Why do we need a confidence interval?</h2>
+          <p>
+            A sample gives us an estimate, but it does not reveal the exact population
+            value. The first question is not “Which formula?” It is “How much would
+            this answer change if we had sampled different orders?”
+          </p>
+        </div>
+      </div>
+
+      <div class="panel warm">
+        <h3>Scenario: are orders taking too long?</h3>
+        <p>
+          A retailer has thousands of orders and wants to know the average time from
+          order acceptance to ready-for-dispatch. Measuring every order is possible
+          only with extra effort, so the analyst takes a random sample of 25 orders.
+          Their average is <strong>42 minutes</strong>.
+        </p>
+        <p>
+          The operations team needs to decide whether to add a shift. If the true
+          average is about 42 minutes, one plan may make sense. If it is closer to
+          50 minutes, another might. Reporting only “42 minutes” hides an important
+          fact: another random sample of 25 orders would probably produce a different
+          average.
+        </p>
+      </div>
+
+      <div class="two-col" style="margin-top:18px">
+        <div class="panel tint">
+          <h3>Why not just report the sample mean?</h3>
+          <p>
+            The sample mean is our best point estimate in this example, but it is
+            only one number from one sample. We need an indication of its likely
+            sampling variation. The interval adds a range around the estimate using
+            the observed variability, the sample size, and a chosen confidence level.
+          </p>
+          <div class="formula">
+            Point estimate: x̄ = 42 minutes<br>
+            Interval estimate: x̄ ± an uncertainty allowance
+          </div>
+        </div>
+        <div class="panel alert">
+          <h3>Why not use sample mean ± standard deviation?</h3>
+          <p>
+            The standard deviation describes the spread of <strong>individual
+            orders</strong>, not how uncertain the sample mean is. If individual
+            orders vary by 10 minutes, it does not follow that the estimated average
+            is uncertain by only 10 minutes, nor does “42 ± 10” have a chosen
+            confidence interpretation.
+          </p>
+          <p class="small">
+            To describe uncertainty in the mean, first use the standard error
+            <strong>s/√n</strong>, then multiply by a critical value for the desired
+            confidence level. Each piece has a distinct job.
+          </p>
+        </div>
+      </div>
+
+      <div class="three-col" style="margin-top:18px">
+        <div class="panel">
+          <h3>Sample mean: the center</h3>
+          <p class="small">Where this sample puts its best estimate. Here, x̄ = 42 minutes.</p>
+        </div>
+        <div class="panel tint">
+          <h3>Standard error: sample-to-sample wobble</h3>
+          <p class="small">How much the sample mean would typically vary across repeated samples of the same size.</p>
+        </div>
+        <div class="panel">
+          <h3>Critical value: coverage multiplier</h3>
+          <p class="small">How many standard errors to extend on each side to reach the selected long-run confidence level.</p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>The key idea:</strong> an interval is not a claim that every value in
+        the range is equally plausible. It is a range produced by a method designed
+        to have a stated long-run capture rate for the population parameter, assuming
+        the data and model satisfy the required conditions.
+      </div>
+
+      <h3 style="margin-top:28px">A preview: three samples, three answers</h3>
+      <p>
+        Imagine three teams independently sample 25 orders. Their sample averages
+        might be 39, 42, and 46 minutes. None automatically equals the population
+        mean. The interval method adds a principled uncertainty range around each
+        average instead of pretending that a single sample value is exact.
+      </p>
+      <div class="interactive">
+        <div class="bar-compare">
+          <span>Sample A mean</span><div class="bar-track"><div class="bar-fill" style="width:48%"></div></div><span class="bar-value">39 min</span>
+        </div>
+        <div class="bar-compare">
+          <span>Sample B mean</span><div class="bar-track"><div class="bar-fill" style="width:54%"></div></div><span class="bar-value">42 min</span>
+        </div>
+        <div class="bar-compare">
+          <span>Sample C mean</span><div class="bar-track"><div class="bar-fill" style="width:61%"></div></div><span class="bar-value">46 min</span>
+        </div>
+        <p class="small muted" style="margin:10px 0 0">
+          The bars show different sample means, not a distribution of individual
+          order times. Repeated sampling is the reason we need to describe uncertainty.
+        </p>
+      </div>
+    </section>
+
+    <section class="lesson" id="sampling">
+      <div class="section-head">
+        <div class="section-number">02</div>
+        <div>
+          <div class="eyebrow">How observations enter the analysis</div>
+          <h2>Sampling techniques</h2>
+          <p>
+            A <strong>population</strong> is the full group we want to understand.
+            A <strong>sample</strong> is the subset we actually observe. Sampling is
+            not just a cost-saving step: the method used to select the sample affects
+            whether its results can represent the population.
+          </p>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <h3>Business example: delivery performance</h3>
+          <p>
+            Suppose a retailer wants the average delivery time for all 80,000 orders
+            shipped last quarter. Measuring every order may be inconvenient, so an
+            analyst selects 600 orders and calculates the sample mean. The 80,000
+            delivery times are the population; the 600 observed times are the sample.
+          </p>
+          <div class="formula">
+            Population: N = 80,000 orders<br>
+            Sample: n = 600 observed orders<br>
+            Parameter: μ = true average delivery time for all 80,000 orders<br>
+            Statistic: x̄ = average delivery time among the 600 sampled orders
+          </div>
+          <p class="small muted">
+            A <strong>parameter</strong> describes a population and is usually unknown.
+            A <strong>statistic</strong> is calculated from a sample and is used to
+            estimate that parameter. The symbol <em>n</em> denotes the sample size.
+          </p>
+        </div>
+        <div class="panel tint">
+          <h3>The sampling frame matters</h3>
+          <p>
+            A <strong>sampling frame</strong> is the practical list or system from
+            which the sample is drawn: for example, the order database. If canceled
+            orders or remote-region shipments are missing from the frame, a perfectly
+            random draw from that incomplete list still will not represent all orders.
+          </p>
+          <p>
+            A <strong>representative sample</strong> reflects the important features
+            of the target population. Random selection can reduce selection bias, but
+            it cannot repair a badly defined population or an incomplete frame.
+          </p>
+        </div>
+      </div>
+
+      <h3 style="margin-top:28px">Common ways to select a sample</h3>
+      <div class="sampling-grid">
+        <article class="sampling-card">
+          <h3>Simple random sampling</h3>
+          <p>Every population member has a known, equal chance of being selected. Use a random-number generator to choose order IDs.</p>
+          <p class="analogy"><strong>Useful when:</strong> you have a complete list and no subgroup needs a guaranteed minimum.</p>
+        </article>
+        <article class="sampling-card">
+          <h3>Stratified sampling</h3>
+          <p>Split the population into meaningful groups called <em>strata</em>—such as region—and randomly sample within every group.</p>
+          <p class="analogy"><strong>Useful when:</strong> you need each region represented. A sample can be proportional to group size or deliberately oversample small groups.</p>
+        </article>
+        <article class="sampling-card">
+          <h3>Cluster sampling</h3>
+          <p>Split the population into natural clusters—such as stores—randomly choose some clusters, then observe all or some members inside them.</p>
+          <p class="analogy"><strong>Useful when:</strong> collecting data across a wide area is expensive. It is often cheaper, but similar people within a cluster can reduce precision.</p>
+        </article>
+        <article class="sampling-card">
+          <h3>Systematic sampling</h3>
+          <p>Choose a random starting point, then select every <em>k</em>th entry from an ordered list. For 600 of 60,000 orders, k = 100.</p>
+          <p class="analogy"><strong>Watch for:</strong> a repeating pattern in the list, such as entries sorted by a cycle that aligns with every 100th record.</p>
+        </article>
+        <article class="sampling-card">
+          <h3>Convenience sampling</h3>
+          <p>Take observations that are easiest to reach, such as customers who answered an optional pop-up survey.</p>
+          <p class="analogy"><strong>Risk:</strong> respondents may differ from nonrespondents. A large convenience sample can still be biased.</p>
+        </article>
+        <article class="sampling-card">
+          <h3>Voluntary-response sampling</h3>
+          <p>People choose for themselves whether to participate, often after seeing an open invitation.</p>
+          <p class="analogy"><strong>Risk:</strong> people with strong opinions may be much more likely to respond, so the sample can exaggerate extreme views.</p>
+        </article>
+      </div>
+
+      <div class="callout">
+        <strong>Random sampling is not random assignment.</strong> Random sampling chooses
+        people or units from a population and helps with generalization. Random assignment
+        places participants into treatment groups and helps with causal comparisons.
+        A study may use one, both, or neither.
+      </div>
+    </section>
+
+    <section class="lesson" id="clt">
+      <div class="section-head">
+        <div class="section-number">03</div>
+        <div>
+          <div class="eyebrow">Why sample averages behave predictably</div>
+          <h2>The Central Limit Theorem and standard error</h2>
+          <p>
+            Individual observations can be skewed or irregular. The Central Limit
+            Theorem (CLT) explains why averages from repeated random samples often
+            form an approximately normal distribution, which makes interval estimation
+            possible.
+          </p>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <h3>First separate three distributions</h3>
+          <div class="step">
+            <b class="index">1</b>
+            <p><strong>Population distribution:</strong> the values of every unit in the group, such as every customer's order value. It may be skewed.</p>
+          </div>
+          <div class="step">
+            <b class="index">2</b>
+            <p><strong>Sample data distribution:</strong> the observed values in one sample. It may also be skewed, especially when the sample is small.</p>
+          </div>
+          <div class="step">
+            <b class="index">3</b>
+            <p><strong>Sampling distribution of the mean:</strong> the distribution of sample means from many repeated samples of the same size. The CLT describes this distribution—not necessarily the raw data.</p>
+          </div>
+          <div class="formula">
+            If samples of size n are repeatedly drawn:<br>
+            E(x̄) = μ &nbsp;&nbsp; and &nbsp;&nbsp; SD(x̄) = σ / √n
+          </div>
+        </div>
+        <div class="panel warm">
+          <h3>Why does averaging help?</h3>
+          <p>
+            A sample mean combines many observations. Unusually high and low values
+            partly balance one another, so means tend to vary less than individual
+            observations. As <em>n</em> grows, the distribution of sample means becomes
+            more concentrated around the true population mean <em>μ</em>.
+          </p>
+          <p>
+            Under the CLT, that sampling distribution becomes approximately bell-shaped
+            when the sample is sufficiently large, provided observations are
+            independent and the population has finite variance. How large is
+            “sufficient” depends on how skewed or heavy-tailed the population is.
+          </p>
+          <p class="small">
+            If the population itself is normal, the sample mean is normally distributed
+            for any sample size (with independent observations). The CLT is most useful
+            when the population is not normal.
+          </p>
+        </div>
+      </div>
+
+      <div class="three-col" style="margin-top:18px">
+        <div class="panel">
+          <h3>Standard deviation (SD)</h3>
+          <p class="small">Describes the spread of individual values in the population or sample. It measures typical observation-to-observation variation.</p>
+        </div>
+        <div class="panel tint">
+          <h3>Standard error (SE)</h3>
+          <p class="small">Describes the spread of a statistic across repeated samples. For a sample mean, it estimates how much x̄ typically changes from sample to sample.</p>
+        </div>
+        <div class="panel">
+          <h3>Sample size effect</h3>
+          <p class="small">SE shrinks in proportion to 1/√n. To halve SE, you need roughly four times as many observations—not twice as many.</p>
+        </div>
+      </div>
+
+      <div class="formula">
+        Known population SD: &nbsp; SE(x̄) = σ / √n<br>
+        Unknown population SD: &nbsp; estimated SE(x̄) = s / √n
+      </div>
+      <p>
+        Here <strong>σ</strong> is the population standard deviation and <strong>s</strong>
+        is the sample standard deviation. We usually do not know σ, so in real business
+        analysis we estimate the standard error using <em>s</em>. This substitution
+        adds uncertainty, which the t-distribution accounts for.
+      </p>
+
+      <div class="panel tint">
+        <h3>Worked SE example: average support response time</h3>
+        <p>
+          A random sample of <strong>n = 64</strong> support tickets has a sample mean
+          response time of 12.4 hours and sample SD <strong>s = 8 hours</strong>.
+        </p>
+        <div class="formula">
+          SE = s / √n<br>
+          SE = 8 / √64<br>
+          SE = 8 / 8 = <strong>1 hour</strong>
+        </div>
+        <p class="small">
+          The 8-hour SD describes variation among individual ticket times. The
+          1-hour SE describes the estimated variation of the sample average across
+          repeated samples of 64 tickets. It does not mean every ticket is within
+          one hour of the sample mean.
+        </p>
+      </div>
+
+      <div class="interactive" style="margin-top:18px">
+        <h3>Visual intuition: what does one standard error look like?</h3>
+        <p class="small muted">
+          The center line represents the true mean in a hypothetical world. If the
+          sampling distribution is approximately normal, about 68% of sample means
+          fall within ±1 SE, about 95% within ±1.96 SE, and about 99% within ±2.576 SE.
+          These percentages concern <em>sample means</em>, not individual observations.
+        </p>
+        <svg id="seBandPlot" class="distribution-svg" viewBox="0 0 800 275" role="img" aria-label="Normal curve showing one, 1.96, and 2.576 standard error bands"></svg>
+        <div class="legend">
+          <span><i class="swatch teal"></i> approximately 68% within ±1 SE</span>
+          <span><i class="swatch coral"></i> additional area to approximately 95% within ±1.96 SE</span>
+          <span><i class="swatch dark"></i> center at population mean</span>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Important assumptions:</strong> the sample should be selected in a way
+        that supports the intended inference; observations should be independent, or
+        dependence should be handled; and the sample size should be adequate for the
+        population's shape. Repeated customers, stores, households, or time-series
+        records can create dependence.
+      </div>
+    </section>
+
+    <section class="lesson" id="meaning">
+      <div class="section-head">
+        <div class="section-number">04</div>
+        <div>
+          <div class="eyebrow">Interpreting uncertainty correctly</div>
+          <h2>What a 95% confidence interval actually means</h2>
+          <p>
+            A confidence interval is a range produced by a method that captures an
+            unknown population parameter at a known long-run rate—if the method's
+            assumptions hold.
+          </p>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="panel tint">
+          <h3>The repeated-sampling interpretation</h3>
+          <p>
+            Imagine taking many new random samples of the same size, and building a
+            95% confidence interval from each one using the same procedure. In the
+            long run, approximately 95% of those intervals would contain the fixed
+            true population mean. About 5% would miss it.
+          </p>
+          <p>
+            The population mean is fixed; the sample and interval change from sample
+            to sample. Before sampling, the method has a 95% coverage rate. After
+            calculating one interval, we do not ordinarily say there is a 95%
+            probability that the fixed mean is inside that specific interval.
+          </p>
+        </div>
+        <div class="panel alert">
+          <h3>What it does not mean</h3>
+          <ul class="small">
+            <li>It does not mean 95% of individual customers or orders lie inside the interval.</li>
+            <li>It does not mean 95% of sample means lie inside this one interval.</li>
+            <li>It does not mean the parameter changes randomly after the interval is computed.</li>
+            <li>It does not guarantee the interval contains the truth in this particular study.</li>
+            <li>It does not correct bias from poor sampling, nonresponse, bad measurement, or missing groups.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3 style="margin-top:27px">Picture the procedure, not a probability attached to this one interval</h3>
+      <p class="muted">
+        Each horizontal segment represents an interval from a different hypothetical
+        sample. The vertical line is the fixed population mean. Green intervals cover
+        it; coral intervals miss it. In this illustration, two intervals deliberately
+        miss the line so you can see what “misses” means. Twenty intervals are far too
+        few to demonstrate a 95% rate; they make the idea visible, not measurable.
+      </p>
+      <div class="panel ci-visual">
+        <div id="coverageRows" aria-label="Repeated confidence intervals illustration"></div>
+        <div class="legend">
+          <span><i class="swatch teal"></i> interval covers the fixed population mean</span>
+          <span><i class="swatch coral"></i> interval misses the fixed population mean</span>
+          <span><i class="swatch dark"></i> fixed population mean</span>
+        </div>
+        <div class="axis"><span>Lower estimate</span><span>Fixed population mean →</span><span>Higher estimate</span></div>
+        <p class="viz-caption">
+          Illustration only: the displayed intervals are chosen to make both outcomes
+          visible, not generated to reproduce a 95% rate. The 95% claim refers to a
+          method's long-run coverage over many repeated samples.
+        </p>
+      </div>
+
+      <div class="two-col" style="margin-top:18px">
+        <div class="panel">
+          <h3>Confidence level</h3>
+          <p class="small">
+            The confidence level is the long-run success rate of the interval
+            procedure. A higher level, such as 99% rather than 95%, requires a wider
+            interval to capture the parameter more often.
+          </p>
+        </div>
+        <div class="panel">
+          <h3>Confidence interval</h3>
+          <p class="small">
+            The particular lower-to-upper range computed from one sample. It depends
+            on the sample estimate, observed variability, sample size, and chosen
+            confidence level.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="lesson" id="critical">
+      <div class="section-head">
+        <div class="section-number">05</div>
+        <div>
+          <div class="eyebrow">From a target confidence to a multiplier</div>
+          <h2>Critical values: what they are and how tables give them</h2>
+          <p>
+            A critical value tells us how many standard errors to go from the estimate
+            in each direction. Its size depends on the confidence level and on whether
+            we use the standard normal z distribution or the t distribution.
+          </p>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div>
+          <h3>Build the idea using a two-sided 95% interval</h3>
+          <p>
+            A standard normal curve has total area 1. For 95% confidence, we want
+            the central 0.95 area. That leaves <strong>0.05 outside</strong> the
+            central region. Because the interval is two-sided, we split that tail
+            area equally: 0.025 in each tail.
+          </p>
+          <div class="formula">
+            Confidence level = 0.95<br>
+            Total tail area α = 1 − 0.95 = 0.05<br>
+            Area in each tail = α/2 = 0.025<br>
+            Cumulative area to upper cutoff = 1 − 0.025 = 0.975<br>
+            z* with cumulative area 0.975 = 1.96
+          </div>
+          <p>
+            So the central 95% of a standard normal distribution runs from
+            <strong>−1.96 to +1.96</strong>. The positive cutoff, 1.96, is the
+            two-sided 95% z critical value.
+          </p>
+        </div>
+        <div class="panel tint">
+          <h3>What does “critical” mean?</h3>
+          <p>
+            It is the boundary between the central region we keep and the tail
+            probability we leave outside. A larger critical value puts the boundary
+            farther from the center, producing a wider interval.
+          </p>
+          <p>
+            A critical value is not the same thing as a data value. The z critical
+            value 1.96 means “1.96 standard errors from the center” on the standard
+            normal scale. To return to the original units, multiply it by the standard
+            error.
+          </p>
+        </div>
+      </div>
+
+      <div class="interactive" style="margin-top:18px">
+        <h3>See how a larger critical value widens the interval</h3>
+        <p class="small muted">
+          Keep the estimate and standard error fixed. Change only the multiplier.
+          Each interval is centered on 42 minutes. The shaded band grows because a
+          larger critical value asks the interval to reach farther into the tails.
+        </p>
+        <div class="control" style="max-width:500px">
+          <label for="criticalSlider">Critical value, c <output id="criticalOut"></output></label>
+          <input id="criticalSlider" type="range" min="0.5" max="3.5" value="1.96" step="0.01">
+        </div>
+        <svg id="criticalPlot" class="distribution-svg" viewBox="0 0 800 305" role="img" aria-label="Normal curve showing central probability and critical value"></svg>
+        <div class="result-strip">
+          <div class="result"><span>Center estimate</span><strong>42.00 min</strong></div>
+          <div class="result"><span>Standard error</span><strong>2.00 min</strong></div>
+          <div class="result"><span>ME = c × SE</span><strong id="criticalME"></strong></div>
+        </div>
+        <p class="viz-caption" id="criticalCaption"></p>
+      </div>
+
+      <h3 style="margin-top:30px">How to read a z table</h3>
+      <p>
+        Z tables are laid out in different ways. This lesson uses a common
+        <strong>cumulative-left</strong> table: the entry at z is the area under the
+        standard normal curve to the left of z, written P(Z ≤ z). To find the
+        two-sided 95% critical value, find cumulative area 0.9750 in the body of the
+        table, then combine its row and column labels.
+      </p>
+      <div class="table-wrap">
+        <table aria-label="Excerpt from a cumulative standard normal z table">
+          <thead>
+            <tr>
+              <th>z row</th>
+              <th class="num">.00</th>
+              <th class="num">.01</th>
+              <th class="num">.02</th>
+              <th class="num">.03</th>
+              <th class="num">.04</th>
+              <th class="num">.05</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>1.8</td><td class="num">.9641</td><td class="num">.9649</td><td class="num">.9656</td><td class="num">.9664</td><td class="num">.9671</td><td class="num">.9678</td></tr>
+            <tr><td>1.9</td><td class="num">.9713</td><td class="num">.9719</td><td class="num">.9726</td><td class="num">.9732</td><td class="num">.9738</td><td class="num">.9744</td></tr>
+            <tr>
+              <td>2.0</td><td class="num">.9772</td><td class="num">.9778</td><td class="num">.9783</td><td class="num">.9788</td><td class="num">.9793</td><td class="num">.9798</td>
+            </tr>
+            <tr><td>1.9, columns .06–.09</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td><td class="num">—</td></tr>
+            <tr>
+              <td>Selected lookup</td>
+              <td class="num" colspan="5">row 1.9 + column .06 → z = 1.96</td>
+              <td class="num lookup-highlight">.9750</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="step-reveal">
+        <strong>Read it carefully:</strong> row <strong>1.9</strong> gives the first
+        two digits and first decimal place. Column <strong>.06</strong> supplies the
+        hundredths place. Together they make <strong>z = 1.96</strong>, whose
+        cumulative-left probability is about <strong>0.9750</strong>.
+        The table value is an area/probability—not the critical value itself.
+      </div>
+      <p class="small muted" style="margin-top:12px">
+        This excerpt is intentionally small. The row-and-column logic is the same in
+        a full printed table. Some z tables instead report the area between 0 and z,
+        or the upper-tail area, so check the table's heading before looking up values.
+      </p>
+
+      <h3 style="margin-top:30px">How to read a t table</h3>
+      <p>
+        A t table is organized by <strong>degrees of freedom</strong> (df), usually
+        in rows, and by a tail probability or confidence level in columns. For a
+        one-sample mean, df = n − 1. Unlike the normal table, a t critical value
+        depends on both confidence level and df.
+      </p>
+      <p>
+        For a two-sided 95% interval with <strong>n = 25</strong>, df = 24. In a
+        table headed by <em>two-tail probability α</em>, use α = 0.05 and row df = 24.
+        In a table headed by <em>one-tail probability</em>, use 0.025 instead.
+      </p>
+      <div class="table-wrap">
+        <table aria-label="Selected t critical values for two-sided intervals">
+          <thead>
+            <tr>
+              <th>Degrees of freedom (df)</th>
+              <th class="num">90% two-sided CI<br>α = .10</th>
+              <th class="num">95% two-sided CI<br>α = .05</th>
+              <th class="num">99% two-sided CI<br>α = .01</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>10</td><td class="num">1.812</td><td class="num">2.228</td><td class="num">3.169</td></tr>
+            <tr><td>20</td><td class="num">1.725</td><td class="num">2.086</td><td class="num">2.845</td></tr>
+            <tr class="lookup-highlight"><td>24</td><td class="num">1.711</td><td class="num">2.064</td><td class="num">2.797</td></tr>
+            <tr><td>30</td><td class="num">1.697</td><td class="num">2.042</td><td class="num">2.750</td></tr>
+            <tr><td>60</td><td class="num">1.671</td><td class="num">2.000</td><td class="num">2.660</td></tr>
+            <tr><td>∞ (normal limit)</td><td class="num">1.645</td><td class="num">1.960</td><td class="num">2.576</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="step-reveal">
+        <strong>Worked table lookup:</strong> n = 25, so df = 25 − 1 = 24. A 95%
+        two-sided interval has α = 1 − .95 = .05 total outside area, .025 in each
+        tail. In the df = 24 row and 95% two-sided (α = .05) column, read
+        <strong>t* ≈ 2.064</strong>.
+      </div>
+      <div class="callout">
+        <strong>Table trap:</strong> “95%” may mean a central 95% two-sided interval,
+        or a one-sided 95% cutoff, depending on the table's headings. Those are not
+        the same lookup. For a two-sided 95% interval, use 0.025 in each tail.
+      </div>
+    </section>
+
+    <section class="lesson" id="compute">
+      <div class="section-head">
+        <div class="section-number">06</div>
+        <div>
+          <div class="eyebrow">Estimate ± uncertainty allowance</div>
+          <h2>Computing a confidence interval</h2>
+          <p>
+            The basic structure is the same for both the z and t methods:
+            sample estimate ± margin of error. The methods differ in which
+            reference distribution supplies the critical value.
+          </p>
+        </div>
+      </div>
+
+      <div class="formula">
+        Confidence interval = estimate ± margin of error<br>
+        Margin of error (ME) = critical value × standard error<br>
+        For a mean: x̄ ± critical value × (standard error of x̄)
+      </div>
+
+      <div class="two-col">
+        <div class="panel">
+          <h3>Method A: z interval</h3>
+          <p>
+            Use the z method for a population mean when the population SD
+            <strong>σ is known</strong>, and the sampling distribution of the mean is
+            normal or well-approximated by normality. The standard normal critical
+            value for a two-sided 95% interval is approximately 1.96.
+          </p>
+          <div class="formula">
+            x̄ ± z* × σ / √n<br>
+            95% two-sided interval: x̄ ± 1.96 × SE
+          </div>
+          <p class="small">
+            The value 1.96 leaves 2.5% in each tail of the standard normal curve.
+            The central 95% spans from z = −1.96 to z = +1.96.
+          </p>
+        </div>
+        <div class="panel tint">
+          <h3>Method B: t interval</h3>
+          <p>
+            Use the one-sample t method for a population mean when σ is unknown and
+            estimated by the sample SD <strong>s</strong>. It uses the t-distribution
+            with <strong>degrees of freedom df = n − 1</strong>.
+          </p>
+          <div class="formula">
+            x̄ ± t* × s / √n<br>
+            df = n − 1
+          </div>
+          <p class="small">
+            The t curve has heavier tails than the normal curve, especially for small
+            samples. That produces a larger critical value and a wider interval,
+            reflecting the extra uncertainty from estimating σ with s.
+          </p>
+        </div>
+      </div>
+
+      <div class="panel warm" style="margin-top:18px">
+        <h3>Worked example: average order preparation time</h3>
+        <p>
+          A sample of <strong>n = 25</strong> orders has mean preparation time
+          <strong>x̄ = 42 minutes</strong> and sample SD <strong>s = 10 minutes</strong>.
+          We want a two-sided 95% interval for the population mean, and σ is unknown.
+          Therefore use a t interval with df = 25 − 1 = 24.
+        </p>
+        <div class="step">
+          <b class="index">1</b>
+          <p><strong>Calculate the standard error:</strong> SE = s/√n = 10/√25 = 10/5 = <strong>2 minutes</strong>.</p>
+        </div>
+        <div class="step">
+          <b class="index">2</b>
+          <p><strong>Find the t critical value:</strong> for 95% confidence and df = 24, t* ≈ <strong>2.064</strong>.</p>
+        </div>
+        <div class="step">
+          <b class="index">3</b>
+          <p><strong>Calculate the margin of error:</strong> ME = t* × SE = 2.064 × 2 = <strong>4.128 minutes</strong>.</p>
+        </div>
+        <div class="step">
+          <b class="index">4</b>
+          <p><strong>Build the interval:</strong> 42 ± 4.128 = [42 − 4.128, 42 + 4.128] = <strong>[37.872, 46.128] minutes</strong>, or about <strong>[37.9, 46.1]</strong>.</p>
+        </div>
+        <p class="small">
+          Interpretation: using this sampling procedure, the 95% t-interval method
+          would capture the true mean preparation time in about 95% of repeated
+          samples, under its assumptions. This interval is not a range containing
+          95% of individual order times.
+        </p>
+      </div>
+
+      <div class="two-col" style="margin-top:18px">
+        <div class="panel">
+          <h3>Why is t wider than z?</h3>
+          <p class="small">
+            In the worked example, a z approximation would use 1.96 instead of 2.064:
+            ME = 1.96 × 2 = 3.92, giving [38.08, 45.92]. The t interval is wider
+            because the sample SD is only an estimate of population variability.
+            As degrees of freedom grow, the t critical value approaches 1.96.
+          </p>
+        </div>
+        <div class="panel">
+          <h3>Choosing z or t in practice</h3>
+          <p class="small">
+            For a mean, use t when σ is unknown—which is the ordinary real-world
+            case. Use z when σ is genuinely known from reliable external information.
+            Large-sample z approximations are sometimes used, but the t method is
+            generally straightforward and accounts for estimating the SD.
+          </p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Margin of error is not the standard error.</strong> SE measures
+        estimated sampling variability in the statistic. ME scales that SE by the
+        confidence-level critical value. At 95%, for example, ME is about 1.96 SE
+        for z or t* SE for t.
+      </div>
+    </section>
+
+    <section class="lesson" id="explorer">
+      <div class="section-head">
+        <div class="section-number">07</div>
+        <div>
+          <div class="eyebrow">Change assumptions and see the interval respond</div>
+          <h2>Interactive confidence-interval explorer</h2>
+          <p>
+            Adjust the sample information below. Watch the standard error, critical
+            value, margin of error, and interval update. The example estimates a
+            population mean from a sample.
+          </p>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="panel">
+          <h3>Set the sample and method</h3>
+          <div class="control-grid">
+            <div class="control">
+              <label for="sampleMean">Sample mean, x̄ <output id="meanOut"></output></label>
+              <input id="sampleMean" type="range" min="20" max="80" value="42" step="1">
+            </div>
+            <div class="control">
+              <label for="sampleSD">Sample SD, s <output id="sdOut"></output></label>
+              <input id="sampleSD" type="range" min="2" max="24" value="10" step="1">
+            </div>
+            <div class="control">
+              <label for="sampleSize">Sample size, n <output id="nOut"></output></label>
+              <input id="sampleSize" type="range" min="5" max="200" value="25" step="1">
+            </div>
+            <div class="control">
+              <label for="confidence">Confidence level <output id="confOut"></output></label>
+              <select id="confidence">
+                <option value="0.90">90%</option>
+                <option value="0.95" selected>95%</option>
+                <option value="0.99">99%</option>
+              </select>
+            </div>
+            <div class="control">
+              <label for="method">Interval method</label>
+              <select id="method">
+                <option value="t" selected>t interval (σ unknown; usual choice)</option>
+                <option value="z">z interval (treat σ as known; use s here as illustration)</option>
+              </select>
+            </div>
+          </div>
+          <p class="small muted" style="margin-top:12px">
+            The z option uses the displayed sample SD as if it were a known σ solely
+            to compare the formulas. In an actual z interval, supply a genuinely
+            known population SD.
+          </p>
+        </div>
+
+        <div class="panel tint">
+          <h3>Your calculation, step by step</h3>
+          <div class="formula" id="liveFormula" aria-live="polite"></div>
+          <div class="result-strip">
+            <div class="result"><span>Standard error</span><strong id="seResult"></strong></div>
+            <div class="result"><span>Critical value</span><strong id="criticalResult"></strong></div>
+            <div class="result"><span>Margin of error</span><strong id="meResult"></strong></div>
+          </div>
+          <div class="result-strip">
+            <div class="result"><span>Lower endpoint</span><strong id="lowerResult"></strong></div>
+            <div class="result"><span>Sample mean</span><strong id="centerResult"></strong></div>
+            <div class="result"><span>Upper endpoint</span><strong id="upperResult"></strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:18px">
+        <h3>Interval on a number line</h3>
+        <svg id="intervalPlot" class="viz" viewBox="0 0 800 205" role="img" aria-label="Confidence interval centered on the sample mean"></svg>
+        <p class="viz-caption" id="plotCaption"></p>
+      </div>
+
+      <div class="two-col" style="margin-top:18px">
+        <div class="panel">
+          <h3>What happens when you change n?</h3>
+          <p class="small">
+            Increasing n reduces SE because the denominator √n grows. That usually
+            narrows the interval. But returns diminish: moving from n = 25 to n = 100
+            halves SE; moving from n = 100 to n = 400 halves it again.
+          </p>
+          <div class="formula">SE ∝ 1/√n &nbsp; so &nbsp; ME ∝ 1/√n (when other inputs stay fixed)</div>
+        </div>
+        <div class="panel">
+          <h3>What happens when confidence rises?</h3>
+          <p class="small">
+            A higher confidence level uses a larger critical value. If the sample
+            stays the same, ME increases and the interval becomes wider. You cannot
+            get higher confidence for free: you trade precision for a higher
+            long-run capture rate.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="lesson" id="check">
+      <div class="section-head">
+        <div class="section-number">08</div>
+        <div>
+          <div class="eyebrow">A quick reasoning check</div>
+          <h2>Common confusion traps</h2>
+          <p>These are the distinctions that most often change a correct calculation into a misleading conclusion.</p>
+        </div>
+      </div>
+
+      <div class="sampling-grid">
+        <div class="trap">
+          <strong>“The 95% CI contains 95% of the customers.”</strong>
+          <p class="small">No. It estimates a population parameter, such as a mean. Use a prediction interval or other method for ranges of individual outcomes.</p>
+        </div>
+        <div class="trap">
+          <strong>“95% probability means this fixed mean has a 95% chance of being here.”</strong>
+          <p class="small">In the standard frequentist interpretation, the parameter is fixed. The procedure has 95% long-run coverage; this particular interval either contains the parameter or it does not.</p>
+        </div>
+        <div class="trap">
+          <strong>“A large sample automatically fixes bad sampling.”</strong>
+          <p class="small">No. More observations can reduce random sampling error, but cannot automatically remove selection bias, nonresponse bias, measurement error, or an incomplete sampling frame.</p>
+        </div>
+        <div class="trap">
+          <strong>“Standard deviation and standard error are interchangeable.”</strong>
+          <p class="small">No. SD describes spread among data values; SE describes spread of a statistic across repeated samples. For a mean, estimated SE = s/√n.</p>
+        </div>
+        <div class="trap">
+          <strong>“A 95% interval has a 5% chance of being wrong because 5% of data are outside.”</strong>
+          <p class="small">The 5% refers to the long-run fraction of intervals that miss the parameter—not the fraction of data values outside the interval.</p>
+        </div>
+        <div class="trap">
+          <strong>“The CLT says the original data become normal when n is large.”</strong>
+          <p class="small">No. The CLT concerns the sampling distribution of the sample mean (or an appropriately standardized sum), not the shape of the raw observations.</p>
+        </div>
+        <div class="trap">
+          <strong>“Every observation must be independent because the sample is large.”</strong>
+          <p class="small">No. Dependence can persist at any sample size. For example, many orders from the same store may be correlated. The analysis may need cluster-aware methods.</p>
+        </div>
+        <div class="trap">
+          <strong>“A wider interval means the estimate is worse.”</strong>
+          <p class="small">Not necessarily. It may honestly reflect a smaller sample, more variability, or a higher confidence target. Width communicates precision, not whether the estimate is biased.</p>
+        </div>
+      </div>
+
+      <div class="panel tint" style="margin-top:21px">
+        <h3>Before reporting a confidence interval, ask</h3>
+        <ol>
+          <li>What population and parameter am I trying to describe?</li>
+          <li>How were the observations selected, and who or what may be missing?</li>
+          <li>Are observations independent, or is there clustering or time dependence?</li>
+          <li>What are the sample estimate, sample size, and variability?</li>
+          <li>Is the z or t method appropriate, and what assumptions does it need?</li>
+          <li>Can I explain the confidence level as long-run coverage rather than a probability claim about this fixed parameter?</li>
+        </ol>
+      </div>
+    </section>
+
+    <footer class="footer">
+      Statistics · Class 3 · Sampling, the CLT, critical values, and confidence intervals
+    </footer>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const $ = (id) => document.getElementById(id);
+
+      function erf(x) {
+        const sign = x < 0 ? -1 : 1;
+        x = Math.abs(x);
+        const a1 = 0.254829592;
+        const a2 = -0.284496736;
+        const a3 = 1.421413741;
+        const a4 = -1.453152027;
+        const a5 = 1.061405429;
+        const p = 0.3275911;
+        const t = 1 / (1 + p * x);
+        const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+        return sign * y;
+      }
+
+      function normalCDF(z) {
+        return 0.5 * (1 + erf(z / Math.sqrt(2)));
+      }
+
+      function inverseNormal(p) {
+        if (p <= 0 || p >= 1) throw new Error("p must be between 0 and 1");
+        const a = [
+          -39.69683028665376, 220.9460984245205, -275.9285104469687,
+          138.3577518672690, -30.66479806614716, 2.506628277459239
+        ];
+        const b = [
+          -54.47609879822406, 161.5858368580409, -155.6989798598866,
+          66.80131188771972, -13.28068155288572
+        ];
+        const c = [
+          -0.007784894002430293, -0.3223964580411365, -2.400758277161838,
+          -2.549732539343734, 4.374664141464968, 2.938163982698783
+        ];
+        const d = [
+          0.007784695709041462, 0.3224671290700398,
+          2.445134137142996, 3.754408661907416
+        ];
+        const low = 0.02425, high = 1 - low;
+        let q, r;
+        if (p < low) {
+          q = Math.sqrt(-2 * Math.log(p));
+          return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+            ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+        }
+        if (p > high) {
+          q = Math.sqrt(-2 * Math.log(1 - p));
+          return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+            ((((d[0] * q + d[1]) * q + d
