@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An interactive, worked-example lesson on sampling, the Central Limit Theorem, standard error, critical values, and confidence intervals.">
+  <title>From sample to decision — Sampling & confidence intervals</title>
+  <style>
+    :root {
+      --ink: #1d2b32;
+      --muted: #586b72;
+      --paper: #f3f7f4;
+      --white: #fff;
+      --teal: #126c69;
+      --teal-dark: #0b504f;
+      --mint: #dcefeb;
+      --coral: #c3513c;
+      --coral-pale: #fae9e3;
+      --gold: #dda943;
+      --blue: #496d91;
+      --line: #d5e0da;
+      --serif: Georgia, "Times New Roman", serif;
+      --sans: "Avenir Next", Avenir, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      --shadow: 0 14px 38px rgba(29, 43, 50, .075);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--paper);
+      font-family: var(--sans);
+      line-height: 1.66;
+    }
+    button, input, select { font: inherit; }
+    a { color: var(--teal-dark); }
+    :focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 5vw;
+      color: #eff8f5;
+      background: var(--teal-dark);
+      font-size: .8rem;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+    .topbar span:last-child { color: #bddbd5; text-align: right; }
+    main { width: min(1120px, calc(100% - 36px)); margin: auto; }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 35px;
+      align-items: center;
+      padding: 70px 0 40px;
+    }
+    .eyebrow {
+      color: var(--teal);
+      font-size: .74rem;
+      font-weight: 800;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+    h1, h2, h3 { line-height: 1.14; }
+    h1 {
+      max-width: 760px;
+      margin: 12px 0 18px;
+      font: 500 clamp(2.7rem, 6vw, 5.2rem)/.99 var(--serif);
+      letter-spacing: -.045em;
+    }
+    h2 {
+      margin: 4px 0 9px;
+      font: 500 clamp(1.9rem, 3.7vw, 2.8rem) var(--serif);
+      letter-spacing: -.025em;
+    }
+    h3 { margin: 0 0 10px; font-size: 1.16rem; }
+    p { margin: 0 0 13px; }
+    .hero p { max-width: 720px; color: var(--muted); font-size: 1.08rem; }
+    .hero-art {
+      min-height: 280px;
+      padding: 22px;
+      display: grid;
+      place-items: center;
+      border-radius: 44% 44% 15px 15px;
+      background:
+        radial-gradient(ellipse at 50% 85%, rgba(18,108,105,.17), transparent 58%),
+        var(--mint);
+    }
+    .hero-art svg { width: 100%; max-width: 355px; }
+    .hero-caption {
+      margin: 0;
+      color: var(--teal-dark);
+      text-align: center;
+      font: italic 1rem var(--serif);
+    }
+    .nav { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 0 30px; }
+    .nav a {
+      padding: 6px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255,255,255,.7);
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .78rem;
+    }
+    .nav a:hover { color: var(--teal-dark); border-color: var(--teal); }
+    section.lesson {
+      margin: 0 0 27px;
+      padding: clamp(23px, 4.5vw, 48px);
+      border: 1px solid #e0e9e4;
+      border-radius: 17px;
+      background: var(--white);
+      box-shadow: var(--shadow);
+    }
+    .section-head {
+      display: grid;
+      grid-template-columns: 51px 1fr;
+      gap: 14px;
+      align-items: start;
+      margin-bottom: 25px;
+    }
+    .section-number {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--mint);
+      color: var(--teal-dark);
+      font: .9rem var(--mono);
+    }
+    .section-head p { max-width: 800px; margin: 0; color: var(--muted); }
+    .muted { color: var(--muted); }
+    .small { font-size: .89rem; }
+    .two, .three { display: grid; gap: 17px; align-items: start; }
+    .two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .panel {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: #fbfcfb;
+    }
+    .panel.tint { border-color: #cbe0da; background: #edf6f3; }
+    .panel.warm { border-color: #eddbbd; background: #fff7ed; }
+    .panel.alert { border-color: #efc8bb; background: #fff4f0; }
+    .formula {
+      overflow-x: auto;
+      margin: 13px 0;
+      padding: 13px 15px;
+      border-left: 4px solid var(--teal);
+      background: #f0f6f4;
+      font: .96rem/1.8 var(--mono);
+    }
+    .callout { margin: 17px 0; padding: 15px 18px; border-radius: 10px; background: #f0f6f4; }
+    .callout strong { color: var(--teal-dark); }
+    .trap { padding: 15px 17px; border-left: 4px solid var(--coral); border-radius: 0 10px 10px 0; background: #fff4f0; }
+    .trap strong { color: #963c2c; }
+    .table-wrap { overflow-x: auto; margin: 13px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: .88rem; }
+    th, td { padding: 9px 11px; border-bottom: 1px solid var(--line); text-align: left; }
+    th { background: #edf6f3; color: var(--teal-dark); font-size: .78rem; }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .table-highlight { background: #fff0cf; font-weight: 800; }
+    .steps { display: grid; gap: 10px; }
+    .step { display: grid; grid-template-columns: 30px 1fr; gap: 11px; }
+    .step b {
+      width: 27px;
+      height: 27px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      color: white;
+      background: var(--teal);
+      font-size: .8rem;
+    }
+    .step p { margin: 0; }
+    .controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px 22px; }
+    .control label { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 6px; font-size: .88rem; font-weight: 700; }
+    .control output { color: var(--teal-dark); font-family: var(--mono); }
+    input[type="range"] { width: 100%; accent-color: var(--teal); }
+    select { width: 100%; padding: 9px 10px; border: 1px solid #b8cbc4; border-radius: 8px; color: var(--ink); background: white; }
+    button.action {
+      margin-top: 12px;
+      padding: 9px 14px;
+      border: 0;
+      border-radius: 8px;
+      color: white;
+      background: var(--teal);
+      font-weight: 700;
+      cursor: pointer;
+    }
+    button.action:hover { background: var(--teal-dark); }
+    .metric-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; margin-top: 15px; }
+    .metric { padding: 12px; border-radius: 9px; background: #edf6f3; }
+    .metric span { display: block; color: var(--muted); font-size: .72rem; }
+    .metric strong { display: block; margin-top: 4px; color: var(--teal-dark); font: 1rem var(--mono); }
+    .chart { display: block; width: 100%; min-height: 245px; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+    .chart-note { margin: 8px 0 0; color: var(--muted); font-size: .8rem; }
+    .mini-bar { display: grid; grid-template-columns: 100px 1fr 70px; gap: 9px; align-items: center; margin: 10px 0; font-size: .8rem; }
+    .mini-track { height: 15px; border-radius: 99px; background: #e7eeea; position: relative; }
+    .mini-line { position: absolute; top: 3px; height: 9px; border-radius: 99px; background: var(--teal); }
+    .mini-line.miss { background: var(--coral); }
+    .truth-line { position: absolute; top: -5px; width: 2px; height: 25px; background: var(--ink); }
+    .mini-status { color: var(--muted); text-align: right; }
+    .footer { padding: 28px 15px 48px; color: var(--muted); text-align: center; font-size: .84rem; }
+
+    @media (max-width: 760px) {
+      main { width: min(100% - 26px, 1120px); }
+      .hero { grid-template-columns: 1fr; gap: 16px; padding: 49px 0 30px; }
+      .hero-art { min-height: 205px; }
+      .hero-art svg { max-width: 270px; }
+      .two, .three, .controls { grid-template-columns: 1fr; }
+      .topbar { padding: 10px 13px; font-size: .68rem; }
+      .section-head { grid-template-columns: 40px 1fr; gap: 10px; }
+      .section-number { width: 35px; height: 35px; }
+      .metric-grid { grid-template-columns: 1fr; }
+      .mini-bar { grid-template-columns: 75px 1fr; }
+      .mini-status { grid-column: 2; text-align: left; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <strong>Statistics · Class 3</strong>
+    <span>Sampling → uncertainty → decisions</span>
+  </div>
+
+  <main>
+    <header class="hero">
+      <div>
+        <div class="eyebrow">Start with the business question</div>
+        <h1>How sure are we about the average?</h1>
+        <p>
+          A business rarely measures every customer or every order. A sample gives
+          us a useful estimate—but a different sample would give a different answer.
+          This lesson starts with that practical problem and builds toward confidence
+          intervals, one visible step at a time.
+        </p>
+      </div>
+      <div class="hero-art">
+        <div>
+          <svg viewBox="0 0 360 230" role="img" aria-label="Many sample means cluster around the population mean">
+            <path d="M25 183 C88 183 103 153 125 105 C146 58 158 43 180 43 C202 43 214 58 236 105 C258 154 274 183 335 183"
+              fill="none" stroke="#126c69" stroke-width="5"/>
+            <line x1="180" y1="29" x2="180" y2="190" stroke="#c3513c" stroke-width="3" stroke-dasharray="6 6"/>
+            <line x1="90" y1="182" x2="270" y2="182" stroke="#82958d" stroke-width="2"/>
+            <circle cx="135" cy="91" r="6" fill="#dda943"/>
+            <circle cx="164" cy="48" r="6" fill="#dda943"/>
+            <circle cx="194" cy="48" r="6" fill="#dda943"/>
+            <circle cx="225" cy="91" r="6" fill="#dda943"/>
+            <text x="180" y="211" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#0b504f">many samples → many estimates</text>
+            <text x="188" y="26" font-family="sans-serif" font-size="11" fill="#963c2c">population mean</text>
+          </svg>
+          <p class="hero-caption">One sample gives one estimate. Repeated samples reveal its uncertainty.</p>
+        </div>
+      </div>
+    </header>
+
+    <nav class="nav" aria-label="Lesson sections">
+      <a href="#why">Why intervals?</a>
+      <a href="#sampling">Sampling</a>
+      <a href="#clt">CLT & standard error</a>
+      <a href="#critical">Critical values & tables</a>
+      <a href="#interval">Worked interval</a>
+      <a href="#explorer">Interactive lab</a>
+      <a href="#meaning">What 95% means</a>
+      <a href="#traps">Confusion traps</a>
+    </nav>
+
+    <section class="lesson" id="why">
+      <div class="section-head">
+        <div class="section-number">01</div>
+        <div>
+          <div class="eyebrow">The decision before the formula</div>
+          <h2>Why do we need a confidence interval?</h2>
+          <p>
+            Imagine a retailer deciding whether to promise faster delivery. The
+            operations team wants the true average order preparation time, but a
+            full audit of every order is too expensive. They take a sample.
+          </p>
+        </div>
+      </div>
+
+      <div class="two">
+        <div class="panel warm">
+          <h3>A sample is one possible snapshot</h3>
+          <p>
+            Suppose one random sample of 25 orders has an average preparation time
+            of 42 minutes. If we sampled 25 different orders, we probably would not
+            get exactly 42 again. Sampling variability means estimates naturally
+            change from sample to sample—even when the population has not changed.
+          </p>
+          <p>
+            The number 42 is not necessarily the exact population average. It is our
+            point estimate from this sample. We need to express how much sampling
+            uncertainty surrounds it.
+          </p>
+        </div>
+        <div class="panel tint">
+          <h3>Why not report 42 ± one standard deviation?</h3>
+          <p>
+            Standard deviation describes spread among <em>individual order times</em>,
+            not uncertainty in the estimated average. If orders vary a lot, the
+            average can still be estimated quite precisely when the sample is large.
+          </p>
+          <div class="formula">
+            Individual-order spread: s = 10 minutes<br>
+            Uncertainty in sample mean: SE = s / √n<br>
+            For n = 25: SE = 10 / √25 = 2 minutes
+          </div>
+          <p class="small">
+            Reporting 42 ± 10 would address individual variability, not form a
+            confidence interval for the population mean.
+          </p>
+        </div>
+      </div>
+
+      <div class="three" style="margin-top:17px">
+        <div class="panel">
+          <h3>Point estimate</h3>
+          <p class="small">One number from the sample used to estimate a population parameter. Here, x̄ = 42 minutes estimates the unknown mean μ.</p>
+        </div>
+        <div class="panel">
+          <h3>Uncertainty</h3>
+          <p class="small">The estimate would vary if we collected a different sample. Standard error measures typical sample-to-sample variation of the estimator.</p>
+        </div>
+        <div class="panel">
+          <h3>Interval estimate</h3>
+          <p class="small">A range around the point estimate, built with a method designed to capture the true parameter at a chosen long-run rate.</p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Intuition:</strong> We do not know the exact population mean. We know
+        our sample mean, how noisy that estimate is likely to be, and how cautious
+        we want to be. A confidence interval combines those ingredients into a
+        defensible range.
+      </div>
+    </section>
+
+    <section class="lesson" id="sampling">
+      <div class="section-head">
+        <div class="section-number">02</div>
+        <div>
+          <div class="eyebrow">How the evidence is selected</div>
+          <h2>Sampling techniques</h2>
+          <p>
+            A population is the complete group we want to understand. A sample is
+            the subset we observe. A good calculation cannot rescue a sample that
+            systematically leaves out important parts of the population.
+          </p>
+        </div>
+      </div>
+
+      <div class="two">
+        <div>
+          <h3>Delivery-time example</h3>
+          <div class="formula">
+            Population: all 80,000 orders shipped last quarter<br>
+            Sample: 600 observed orders<br>
+            Parameter: μ = true mean delivery time of all orders<br>
+            Statistic: x̄ = mean delivery time of sampled orders
+          </div>
+          <p>
+            A <strong>parameter</strong> describes a population and is generally
+            unknown. A <strong>statistic</strong> is calculated from sample data.
+            The sample statistic estimates the population parameter. <strong>n</strong>
+            denotes sample size; <strong>N</strong> often denotes population size.
+          </p>
+        </div>
+        <div class="panel alert">
+          <h3>Sampling-frame warning</h3>
+          <p>
+            The sampling frame is the actual list or system from which we select
+            observations. If remote-region deliveries are missing from the database,
+            random sampling from that database will still miss them. Random selection
+            cannot fix an incomplete frame.
+          </p>
+        </div>
+      </div>
+
+      <div class="three" style="margin-top:17px">
+        <div class="panel"><span class="badge">Probability sampling</span><h3>Simple random</h3><p class="small">Select units randomly from a complete list, giving each a known selection chance. Useful when a full frame exists.</p></div>
+        <div class="panel tint"><span class="badge">Probability sampling</span><h3>Stratified</h3><p class="small">Split into important groups—such as region—and sample within each. Helps guarantee that small but important groups are represented.</p></div>
+        <div class="panel"><span class="badge">Probability sampling</span><h3>Cluster</h3><p class="small">Randomly select natural groups, such as stores, then measure units inside them. Can reduce collection costs; similarity within a cluster can reduce precision.</p></div>
+        <div class="panel"><span class="badge">Probability sampling</span><h3>Systematic</h3><p class="small">Choose a random start, then select every k-th record. Watch for periodic patterns that align with k.</p></div>
+        <div class="panel alert"><span class="badge">Non-probability sampling</span><h3>Convenience</h3><p class="small">Take whoever is easiest to reach. Fast, but the people easiest to reach may differ from the population.</p></div>
+        <div class="panel alert"><span class="badge">Non-probability sampling</span><h3>Voluntary response</h3><p class="small">People opt in themselves. Those with especially strong experiences may respond more often, distorting the result.</p></div>
+      </div>
+
+      <div class="callout">
+        <strong>Random sampling ≠ random assignment.</strong> Random sampling selects
+        units from a population and supports generalization. Random assignment places
+        study participants into groups and supports causal comparisons.
+      </div>
+    </section>
+
+    <section class="lesson" id="clt">
+      <div class="section-head">
+        <div class="section-number">03</div>
+        <div>
+          <div class="eyebrow">From noisy individual values to stable averages</div>
+          <h2>CLT: why sample means become approximately normal</h2>
+          <p>
+            The Central Limit Theorem concerns the distribution of repeated sample
+            means—not the shape of the original data. This distinction is essential.
+          </p>
+        </div>
+      </div>
+
+      <div class="two">
+        <div class="panel">
+          <h3>Three different distributions</h3>
+          <div class="steps">
+            <div class="step"><b>1</b><p><strong>Population distribution:</strong> every individual order time. It might be right-skewed because a few orders take unusually long.</p></div>
+            <div class="step"><b>2</b><p><strong>One sample's data:</strong> the observations in the 25 orders we measured. They may still look skewed.</p></div>
+            <div class="step"><b>3</b><p><strong>Sampling distribution of x̄:</strong> means from many hypothetical samples of 25 orders. This is the distribution described by the CLT.</p></div>
+          </div>
+        </div>
+        <div class="panel tint">
+          <h3>Why does averaging help?</h3>
+          <p>
+            A mean combines multiple observations. An unusually slow order may be
+            balanced by more ordinary or faster orders. Across repeated samples,
+            averages tend to cluster around the population mean. Under suitable
+            conditions, that cluster becomes approximately bell-shaped as n grows.
+          </p>
+          <p class="small">
+            “Large enough” depends on population skew and tails. Independent
+            observations and finite variance matter. If the population itself is
+            normal, the sample mean is normal for any sample size when observations
+            are independent.
+          </p>
+        </div>
+      </div>
+
+      <div class="formula">
+        E(x̄) = μ &nbsp;&nbsp; and &nbsp;&nbsp; SD(x̄) = σ / √n<br>
+        In practice, estimate SD(x̄) with SE = s / √n
+      </div>
+
+      <div class="panel tint">
+        <h3>Worked standard-error calculation</h3>
+        <p>A sample contains n = 25 order times, with sample standard deviation s = 10 minutes.</p>
+        <div class="formula">
+          SE = s / √n<br>
+          SE = 10 / √25<br>
+          SE = 10 / 5 = <strong>2 minutes</strong>
+        </div>
+        <p class="small">
+          The 10-minute SD describes individual order variability. The 2-minute SE
+          describes estimated variation in the sample average across repeated samples.
+        </p>
+      </div>
+
+      <div class="panel" style="margin-top:17px">
+        <h3>Visual intuition: what does one standard error look like?</h3>
+        <p>
+          The curve below represents a hypothetical sampling distribution of sample
+          means. The center is the true population mean. If this distribution is
+          approximately normal, about 68% of sample means fall within ±1 SE, about
+          95% within ±1.96 SE, and about 99% within ±2.576 SE. These percentages
+          describe <em>sample means</em>, not individual observations.
+        </p>
+        <svg id="seCurve" class="chart" viewBox="0 0 820 300" role="img" aria-label="Normal sampling distribution with regions within one standard error and 1.96 standard errors"></svg>
+        <div class="chart-note">
+          <span style="color:#126c69;font-weight:800">Teal</span> = central 68% (about ±1 SE) &nbsp;·&nbsp;
+          <span style="color:#c3513c;font-weight:800">Coral</span> = additional area from ±1 to ±1.96 SE &nbsp;·&nbsp;
+          Black line = population mean
+        </div>
+        <p class="small muted" style="margin-top:12px">
+          The 95% span is wider because it must cover more of the sampling distribution:
+          it reaches nearly two standard errors in both directions. That same idea
+          leads to the confidence-interval multiplier.
+        </p>
+      </div>
+
+      <div class="panel warm" style="margin-top:17px">
+        <h3>Interactive CLT simulation: increase n and watch means cluster</h3>
+        <p class="small">
+          The simulated population is deliberately right-skewed. Each histogram
+          shows averages from repeated samples. Increasing the number of observations
+          per sample usually narrows the spread of those averages and makes their
+          distribution more bell-shaped.
+        </p>
+        <div class="controls">
+          <div class="control">
+            <label for="simN">Observations per sample, n <output id="simNOut"></output></label>
+            <input id="simN" type="range" min="2" max="80" value="8" step="1">
+          </div>
+          <div class="control">
+            <label for="simCount">Number of repeated samples <output id="simCountOut"></output></label>
+            <input id="simCount" type="range" min="200" max="1600" value="800" step="200">
+          </div>
+        </div>
+        <button id="runSimulation" class="action" type="button">Run simulation again</button>
+        <svg id="cltChart" class="chart" viewBox="0 0 820 330" role="img" aria-label="Histogram of simulated sample means"></svg>
+        <p id="cltSummary" class="chart-note" aria-live="polite"></p>
+      </div>
+
+      <div class="callout">
+        <strong>Sample size has diminishing returns:</strong> SE shrinks with the
+        square root of n. To halve the SE, multiply sample size by four. Doubling n
+        does not halve the SE.
+      </div>
+    </section>
+
+    <section class="lesson" id="critical">
+      <div class="section-head">
+        <div class="section-number">04</div>
+        <div>
+          <div class="eyebrow">How cautious should the interval be?</div>
+          <h2>Critical values: reading z and t tables</h2>
+          <p>
+            A critical value tells us how many standard errors to extend on each
+            side of the estimate. Higher confidence requires reaching farther into
+            the tails, so the interval becomes wider.
+          </p>
+        </div>
+      </div>
+
+      <div class="two">
+        <div class="panel">
+          <h3>Critical value as a multiplier</h3>
+          <div class="formula">
+            Margin of error = critical value × standard error<br>
+            Interval = estimate ± (critical value × SE)
+          </div>
+          <p>
+            A critical value is a multiplier, not a distance measured in minutes.
+            If SE is 2 minutes and the critical value is 2, the margin of error is
+            4 minutes.
+          </p>
+          <p>
+            For a two-sided 95% interval, the central area is 0.95. The remaining
+            0.05 is split equally between two tails: 0.025 in each. The z critical
+            value has cumulative area 0.975 to its left, so z* ≈ 1.96.
+          </p>
+        </div>
+        <div class="panel tint">
+          <h3>Visual: larger critical value, wider interval</h3>
+          <p class="small">
+            The standard error stays fixed. A 99% confidence target uses a larger
+            multiplier than 90%, so its range extends farther from the estimate.
+          </p>
+          <svg id="criticalChart" class="chart" viewBox="0 0 820 300" role="img" aria-label="Normal curve comparing 90 percent and 99 percent critical values"></svg>
+          <p class="chart-note">A larger critical value adds more standard errors to the margin of error.</p>
+        </div>
+      </div>
+
+      <div class="two" style="margin-top:18px">
+        <div class="panel">
+          <h3>Standard normal z table: selected values</h3>
+          <p class="small">
+            This table uses the cumulative area to the left, Φ(z). For two-sided
+            confidence C, look up (1 + C) / 2.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Confidence C</th><th class="num">Tail each side α/2</th><th class="num">Left area 1 − α/2</th><th class="num">Critical z*</th></tr></thead>
+              <tbody>
+                <tr><td>80%</td><td class="num">0.100</td><td class="num">0.900</td><td class="num">1.282</td></tr>
+                <tr><td>90%</td><td class="num">0.050</td><td class="num">0.950</td><td class="num">1.645</td></tr>
+                <tr class="table-highlight"><td>95%</td><td class="num">0.025</td><td class="num">0.975</td><td class="num">1.960</td></tr>
+                <tr><td>98%</td><td class="num">0.010</td><td class="num">0.990</td><td class="num">2.326</td></tr>
+                <tr><td>99%</td><td class="num">0.005</td><td class="num">0.995</td><td class="num">2.576</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="small">
+            Example: 95% means α = 1 − 0.95 = 0.05. Divide by two, giving 0.025
+            in each tail. The left cumulative area is 1 − 0.025 = 0.975. Find 0.975
+            in a left-tail z table; the corresponding z is about 1.96.
+          </p>
+        </div>
+
+        <div class="panel">
+          <h3>t table: selected two-sided critical values</h3>
+          <p class="small">
+            A t table uses confidence level and degrees of freedom. For a one-sample
+            mean, df = n − 1. Values are rounded.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>df</th><th class="num">90% t*</th><th class="num">95% t*</th><th class="num">99% t*</th></tr></thead>
+              <tbody>
+                <tr><td>5</td><td class="num">2.015</td><td class="num">2.571</td><td class="num">4.032</td></tr>
+                <tr><td>10</td><td class="num">1.812</td><td class="num">2.228</td><td class="num">3.169</td></tr>
+                <tr><td>20</td><td class="num">1.725</td><td class="num">2.086</td><td class="num">2.845</td></tr>
+                <tr class="table-highlight"><td>24</td><td class="num">1.711</td><td class="num">2.064</td><td class="num">2.797</td></tr>
+                <tr><td>30</td><td class="num">1.697</td><td class="num">2.042</td><td class="num">2.750</td></tr>
+                <tr><td>∞ limit</td><td class="num">1.645</td><td class="num">1.960</td><td class="num">2.576</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="small">
+            Example: n = 25 gives df = 24. Read row df = 24 and the 95% column:
+            t* ≈ 2.064. This exceeds z* = 1.96 because estimating the population
+            SD adds uncertainty.
+          </p>
+        </div>
+      </div>
+
+      <div class="panel warm" style="margin-top:18px">
+        <h3>How to use a t table when the exact df row is missing</h3>
+        <ol class="small">
+          <li>Calculate degrees of freedom: df = n − 1.</li>
+          <li>Choose the column matching the confidence level and whether the question is one- or two-sided.</li>
+          <li>If the exact df row is absent, a conservative classroom approach is to use the next lower df row; it gives a slightly larger critical value.</li>
+          <li>As df grows, the t critical value approaches the matching z value.</li>
+        </ol>
+        <p class="small">
+          <strong>Table-heading trap:</strong> tables may label columns by one-tail
+          probability α/2, two-tail probability α, or confidence level. Check the
+          heading before choosing a column.
+        </p>
+      </div>
+    </section>
+
+    <section class="lesson" id="interval">
+      <div class="section-head">
+        <div class="section-number">05</div>
+        <div>
+          <div class="eyebrow">Put the pieces together</div>
+          <h2>Step-by-step: a t confidence interval</h2>
+          <p>
+            We have 25 randomly sampled orders. Their preparation times have a mean
+            of 42 minutes and a sample standard deviation of 10 minutes. Estimate
+            the population mean preparation time with a 95% interval.
+          </p>
+        </div>
+      </div>
+
+      <div class="panel warm">
+        <div class="steps">
+          <div class="step"><b>1</b><p><strong>Choose the method.</strong> The population SD σ is unknown, so use a one-sample t interval.</p></div>
+          <div class="step"><b>2</b><p><strong>Calculate degrees of freedom.</strong> df = n − 1 = 25 − 1 = 24.</p></div>
+          <div class="step"><b>3</b><p><strong>Calculate standard error.</strong> SE = s/√n = 10/√25 = 10/5 = 2 minutes.</p></div>
+          <div class="step"><b>4</b><p><strong>Find the critical value.</strong> In the 95% two-sided t table, row df = 24, t* ≈ 2.064.</p></div>
+          <div class="step"><b>5</b><p><strong>Calculate margin of error.</strong> ME = t* × SE = 2.064 × 2 = 4.128 minutes.</p></div>
+          <div class="step"><b>6</b><p><strong>Calculate endpoints.</strong> Lower = 42 − 4.128 = 37.872. Upper = 42 + 4.128 = 46.128 minutes.</p></div>
+        </div>
+        <div class="formula">
+          x̄ ± t* × s/√n<br>
+          42 ± 2.064 × 10/√25<br>
+          42 ± 4.128<br>
+          95% CI = [37.872, 46.128] ≈ <strong>[37.9, 46.1] minutes</strong>
+        </div>
+        <p>
+          Under the sampling assumptions, the t-interval procedure captures the
+          population mean in about 95% of repeated samples. This is an interval
+          about the <em>mean</em>, not a range containing 95% of individual orders.
+        </p>
+      </div>
+
+      <div class="two" style="margin-top:18px">
+        <div class="panel">
+          <h3>What if σ were genuinely known?</h3>
+          <p class="small">If the population SD were known to be 10 minutes, z* = 1.96 and SE = 10/√25 = 2:</p>
+          <div class="formula">
+            ME = 1.96 × 2 = 3.92<br>
+            z interval = 42 ± 3.92 = [38.08, 45.92]
+          </div>
+          <p class="small">It is narrower than the t interval because it does not account for estimating σ.</p>
+        </div>
+        <div class="panel tint">
+          <h3>When is z appropriate?</h3>
+          <p class="small">
+            For a mean, z is appropriate when σ is genuinely known and the sampling
+            distribution is normal or well approximated by normal. If σ is unknown
+            and estimated with s, the standard one-sample method is t.
+          </p>
+          <p class="small">The t method is straightforward and approaches z as degrees of freedom grow.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="lesson" id="explorer">
+      <div class="section-head">
+        <div class="section-number">06</div>
+        <div>
+          <div class="eyebrow">Change a choice; see the consequence</div>
+          <h2>Interactive interval laboratory</h2>
+          <p>
+            Move the controls to see how sample size, variability, confidence level,
+            and method change the calculation. The visualization updates live.
+          </p>
+        </div>
+      </div>
+
+      <div class="two">
+        <div class="panel">
+          <h3>Set the sample facts</h3>
+          <div class="controls">
+            <div class="control">
+              <label for="meanInput">Sample mean x̄ <output id="meanOutput"></output></label>
+              <input id="meanInput" type="range" min="20" max="80" value="42" step="1">
+            </div>
+            <div class="control">
+              <label for="sdInput">Sample SD s <output id="sdOutput"></output></label>
+              <input id="sdInput" type="range" min="2" max="24" value="10" step="1">
+            </div>
+            <div class="control">
+              <label for="nInput">Sample size n <output id="nOutput"></output></label>
+              <input id="nInput" type="range" min="5" max="200" value="25" step="1">
+            </div>
+            <div class="control">
+              <label for="confidenceInput">Confidence level</label>
+              <select id="confidenceInput">
+                <option value="0.90">90%</option>
+                <option value="0.95" selected>95%</option>
+                <option value="0.99">99%</option>
+              </select>
+            </div>
+            <div class="control">
+              <label for="methodInput">Method</label>
+              <select id="methodInput">
+                <option value="t" selected>t (σ unknown; usual choice)</option>
+                <option value="z">z (σ treated as known for comparison)</option>
+              </select>
+            </div>
+          </div>
+          <p class="small muted" style="margin-top:10px">
+            The z option uses s as a stand-in only to compare multipliers. A real
+            z interval for a mean requires a known population SD σ.
+          </p>
+        </div>
+
+        <div class="panel tint">
+          <h3>Calculation updates live</h3>
+          <div class="formula" id="calculation" aria-live="polite"></div>
+          <div class="metric-grid">
+            <div class="metric"><span>Standard error</span><strong id="seMetric"></strong></div>
+            <div class="metric"><span>Critical value</span><strong id="criticalMetric"></strong></div>
+            <div class="metric"><span>Margin of error</span><strong id="meMetric"></strong></div>
+          </div>
+          <div class="metric-grid">
+            <div class="metric"><span>Lower endpoint</span><strong id="lowerMetric"></strong></div>
+            <div class="metric"><span>Estimate</span><strong id="centerMetric"></strong></div>
+            <div class="metric"><span>Upper endpoint</span><strong id="upperMetric"></strong></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:17px">
+        <h3>The estimate and its uncertainty band</h3>
+        <svg id="intervalChart" class="chart" viewBox="0 0 820 230" role="img" aria-label="Current confidence interval on a number line"></svg>
+        <p id="intervalCaption" class="chart-note"></p>
+      </div>
+
+      <div class="panel warm" style="margin-top:17px">
+        <h3>Compare the same estimate at different confidence levels</h3>
+        <p class="small">
+          The sample mean and standard error stay fixed. Only the confidence target
+          and its critical value change. Notice how each band expands.
+        </p>
+        <svg id="confidenceCompare" class="chart" viewBox="0 0 820 280" role="img" aria-label="Comparison of confidence interval widths"></svg>
+      </div>
+    </section>
+
+    <section class="lesson" id="meaning">
+      <div class="section-head">
+        <div class="section-number">07</div>
+        <div>
+          <div class="eyebrow">Interpret the result, not just calculate it</div>
+          <h2>What does “95% confident” mean?</h2>
+          <p>
+            The confidence level describes the long-run performance of the procedure.
+            It is not a statement about the proportion of individuals in an interval.
+          </p>
+        </div>
+      </div>
+
+      <div class="two">
+        <div class="panel tint">
+          <h3>Imagine repeating the whole process</h3>
+          <p>
+            Draw a random sample, calculate an interval, and repeat many times. The
+            true population mean stays fixed, but samples and intervals vary. A valid
+            95% procedure covers the true mean in approximately 95% of repetitions
+            and misses in approximately 5%.
+          </p>
+        </div>
+        <div class="panel alert">
+          <h3>Not what it means</h3>
+          <ul class="small">
+            <li>Not that 95% of individual orders fall inside the interval.</li>
+            <li>Not that the true parameter changes randomly after we calculate the interval.</li>
+            <li>Not a guarantee that this particular interval contains the truth.</li>
+            <li>Not protection from biased sampling, poor measurement, or missing groups.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h3 style="margin-top:24px">Repeated-sample picture: some intervals miss</h3>
+      <p class="muted">
+        The black vertical line is the fixed population mean. Teal intervals contain
+        it; coral intervals do not. These examples are illustrative: a small batch
+        need not show exactly 95% coverage.
+      </p>
+      <div class="panel" id="coverageIllustration"></div>
+      <p class="chart-note">
+        A 95% method is judged over many repetitions, not by demanding exactly 19
+        successful intervals in every set of 20.
+      </p>
+      <div class="callout">
+        <strong>Careful wording:</strong> “We are 95% confident that the population
+        mean lies between these endpoints” is conventional shorthand. More precisely,
+        the method used to create the interval captures the fixed population mean
+        in 95% of repeated samples, assuming its conditions hold.
+      </div>
+    </section>
+
+    <section class="lesson" id="traps">
+      <div class="section-head">
+        <div class="section-number">08</div>
+        <div>
+          <div class="eyebrow">Keep the concepts separate</div>
+          <h2>Beginner confusion traps</h2>
+          <p>Understanding what the calculation does—and does not say—is as important as getting the arithmetic right.</p>
+        </div>
+      </div>
+
+      <div class="two">
+        <div class="trap"><strong>“Sample mean ± standard deviation is a confidence interval.”</strong><p class="small">Usually not. SD describes individual-value spread. For a mean interval, use a standard error and a critical value.</p></div>
+        <div class="trap"><strong>“The CLT makes the original observations normal.”</strong><p class="small">No. It describes the sampling distribution of the mean under suitable conditions, not necessarily the raw data.</p></div>
+        <div class="trap"><strong>“Bigger n eliminates bias.”</strong><p class="small">No. Bigger samples reduce random error, but a biased or incomplete sampling process can remain biased at any size.</p></div>
+        <div class="trap"><strong>“A 95% interval contains 95% of the data.”</strong><p class="small">No. It is an interval estimate of a population parameter, not an interval for individual observations.</p></div>
+        <div class="trap"><strong>“Standard error is the typical distance of data points from the mean.”</strong><p class="small">That is closer to the role of SD. SE estimates sample-to-sample variation of a statistic.</p></div>
+        <div class="trap"><strong>“Higher confidence means greater precision.”</strong><p class="small">At the same sample size and variability, higher confidence means a larger critical value and a wider interval—more coverage, less precision.</p></div>
+        <div class="trap"><strong>“The t method is only for tiny samples.”</strong><p class="small">No. When σ is unknown, t is appropriate for means across sample sizes. Its critical value approaches z as df grows.</p></div>
+        <div class="trap"><strong>“A correct formula guarantees a valid conclusion.”</strong><p class="small">No. Sampling design, independence, measurement quality, and model assumptions matter too.</p></div>
+      </div>
+
+      <div class="panel tint" style="margin-top:19px">
+        <h3>Checklist before reporting an interval</h3>
+        <ol>
+          <li>What population and parameter are being estimated?</li>
+          <li>How were observations selected? Who or what could be missing?</li>
+          <li>Are observations independent, or are there store, customer, or time clusters?</li>
+          <li>What are x̄, n, and s? Is σ genuinely known?</li>
+          <li>Which critical value is appropriate, and how did the table lookup work?</li>
+          <li>Can the result be interpreted as long-run coverage rather than a range containing most individual data?</li>
+        </ol>
+      </div>
+    </section>
+
+    <footer class="footer">Statistics · Class 3 · Sampling, CLT, standard error, critical values, and confidence intervals</footer>
+  </main>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const $ = (id) => document.getElementById(id);
+      const clamp = (x, min, max) => Math.max(min, Math.min(max, x));
+      const fmt = (x, digits = 2) => Number(x).toFixed(digits);
+
+      function erf(x) {
+        const sign = x < 0 ? -1 : 1;
+        x = Math.abs(x);
+        const p = 0.3275911;
+        const a1 = 0.254829592;
+        const a2 = -0.284496736;
+        const a3 = 1.421413741;
+        const a4 = -1.453152027;
+        const a5 = 1.061405429;
+        const t = 1 / (1 + p * x);
+        const y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+        return sign * y;
+      }
+
+      function inverseNormal(p) {
+        if (!(p > 0 && p < 1)) throw new Error("Probability must be between 0 and 1.");
+        const a = [-39.69683028665376, 220.9460984245205, -275.9285104469687, 138.3577518672690, -30.66479806614716, 2.506628277459239];
+        const b = [-54.47609879822406, 161.5858368580409, -155.6989798598866, 66.80131188771972, -13.28068155288572];
+        const c = [-0.007784894002430293, -0.3223964580411365, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783];
+        const d = [0.007784695709041462, 0.3224671290700398, 2.445134137142996, 3.754408661907416];
+        const low = 0.02425;
+        const high = 1 - low;
+        let q, r;
+
+        if (p < low) {
+          q = Math.sqrt(-2 * Math.log(p));
+          return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+            ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+        }
+        if (p > high) {
+          q = Math.sqrt(-2 * Math.log(1 - p));
+          return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) /
+            ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+        }
+        q = p - 0.5;
+        r = q * q;
+        return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q /
+          (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+      }
+
+      function logGamma(z) {
+        const coefficients = [
+          676.5203681218851, -1259.1392167224028, 771.3234287776531,
+          -176.6150291621406, 12.507343278686905, -0.13857109526572012,
+          9.984369578019572e-6, 1.5056327351493116e-7
+        ];
+        if (z < 0.5) {
+          return Math.log(Math.PI) - Math.log(Math.sin(Math.PI * z)) - logGamma(1 - z);
+        }
+        z -= 1;
+        let x = 0.99999999999980993;
+        for (let i = 0; i < coefficients.length; i++) {
+          x += coefficients[i] / (z + i + 1);
+        }
+        const t = z + coefficients.length - 0.5;
+        return 0.5 * Math.log(2 * Math.PI) + (z + 0.5) * Math.log(t) - t + Math.log(x);
+      }
+
+      function betaContinuedFraction(a, b, x) {
+        const maxIterations = 220;
+        const epsilon = 3e-14;
+        const tiny = 1e-300;
+        const qab = a + b;
+        const qap = a + 1;
+        const qam = a - 1;
+
+        let c = 1;
+        let d = 1 - qab * x / qap;
+        if (Math.abs(d) < tiny) d = tiny;
+        d = 1 / d;
+        let h = d;
+
+        for (let m = 1; m <= maxIterations; m++) {
+          const m2 = 2 * m;
+          let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+          d = 1 + aa * d;
+          if (Math.abs(d) < tiny) d = tiny;
+          c = 1 + aa / c;
+          if (Math.abs(c) < tiny) c = tiny;
+          d = 1 / d;
+          h *= d * c;
+
+          aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+          d = 1 + aa * d;
+          if (Math.abs(d) < tiny) d = tiny;
+          c = 1 + aa / c;
+          if (Math.abs(c) < tiny) c = tiny;
+          d = 1 / d;
+          const delta = d * c;
+          h *= delta;
+          if (Math.abs(delta - 1) < epsilon) break;
+        }
+        return h;
+      }
+
+      function regularizedBeta(x, a, b) {
+        if (x <= 0) return 0;
+        if (x >= 1) return 1;
+        const bt = Math.exp(
+          logGamma(a + b) - logGamma(a) - logGamma(b) +
+          a * Math.log(x) + b * Math.log1p(-x)
+        );
+        if (x < (a + 1) / (a + b + 2)) {
+          return bt * betaContinuedFraction(a, b, x) / a;
+        }
+        return 1 - bt * betaContinuedFraction(b, a, 1 - x) / b;
+      }
+
+      function studentTCDF(t, df) {
+        const x = df / (df + t * t);
+        const betaValue = regularizedBeta(x, df / 2, 0.5);
+        return t >= 0 ? 1 - betaValue / 2 : betaValue / 2;
+      }
+
+      function inverseTCritical(confidence, df) {
+        const target = (1 + confidence) / 2;
+        let low = 0;
+        let high = 40;
+        for (let i = 0; i < 100; i++) {
+          const mid = (low + high) / 2;
+          if (studentTCDF(mid, df) < target) low = mid;
+          else high = mid;
+        }
+        return (low + high) / 2;
+      }
+
+      function drawSECurve() {
+        const svg = $("seCurve");
+        const width = 820;
+        const height = 300;
+        const left = 52;
+        const right = 26;
+        const baseline = 224;
+        const plotWidth = width - left - right;
+        const xMin = -4;
+        const xMax = 4;
+        const x = z => left + (z - xMin) / (xMax - xMin) * plotWidth;
+        const y = z => baseline - 150 * Math.exp(-0.5 * z * z);
+
+        function curvePath(from, to, steps) {
+          let path = `M ${x(from).toFixed(2)} ${baseline} `;
+          for (let i = 0; i <= steps; i++) {
+            const z = from + (to - from) * i / steps;
+            path += `L ${x(z).toFixed(2)} ${y(z).toFixed(2)} `;
+          }
+          path += `L ${x(to).toFixed(2)} ${baseline} Z`;
+          return path;
+        }
+
+        let out = `
+          <line x1="${left}" y1="${baseline}" x2="${width-right}" y2="${baseline}" stroke="#aab9b2" stroke-width="1.5"/>
+          <path d="${curvePath(-1, 1, 60)}" fill="#126c69" fill-opacity=".34"/>
+          <path d="${curvePath(-1.96, -1, 45)}" fill="#c3513c" fill-opacity=".24"/>
+          <path d="${curvePath(1, 1.96, 45)}" fill="#c3513c" fill-opacity=".24"/>
+        `;
+
+        let curve = "";
+        for (let i = 0; i <= 220; i++) {
+          const z = xMin + (xMax - xMin) * i / 220;
+          curve += `${i === 0 ? "M" : "L"} ${x(z).toFixed(2)} ${y(z).toFixed(2)} `;
+        }
+        out += `<path d="${curve}" fill="none" stroke="#126c69" stroke-width="3"/>`;
+        out += `<line x1="${x(0)}" y1="${y(0)}" x2="${x(0)}" y2="${baseline}" stroke="#1d2b32" stroke-width="3"/>`;
+        out += `<text x="${x(0) + 7}" y="49" fill="#1d2b32" font-size="12" font-family="sans-serif">true mean μ</text>`;
+        out += `<text x="${x(0)}" y="105" text-anchor="middle" fill="#0b504f" font-size="13" font-weight="700" font-family="sans-serif">about 68%</text>`;
+        out += `<text x="${x(-1.48)}" y="171" text-anchor="middle" fill="#963c2c" font-size="11" font-family="sans-serif">additional area</text>`;
+        out += `<text x="${x(1.48)}" y="171" text-anchor="middle" fill="#963c2c" font-size="11" font-family="sans-serif">additional area</text>`;
+
+        const tickValues = [-3, -1.96, -1, 0, 1, 1.96, 3];
+        tickValues.forEach(value => {
+          const xx = x(value);
+          out += `<line x1="${xx}" y1="${baseline}" x2="${xx}" y2="${baseline + 7}" stroke="#71847c"/>`;
+          out += `<text x="${xx}" y="${baseline + 24}" text-anchor="middle" fill="#586b72" font-size="10" font-family="monospace">${value === 0 ? "μ" : `${value > 0 ? "+" : ""}${value} SE`}</text>`;
+        });
+
+        out += `<text x="${width / 2}" y="282" text-anchor="middle" fill="#586b72" font-size="11" font-family="sans-serif">Distance from the population mean, measured in standard errors</text>`;
+        svg.innerHTML = out;
+      }
+
+      function drawCriticalVisual() {
+        const svg = $("criticalChart");
+        const width = 820;
+        const height = 300;
+        const left = 52;
+        const right = 24;
+        const baseline = 224;
+        const plotWidth = width - left - right;
+        const xMin = -3.5;
+        const xMax = 3.5;
+        const x = z => left + (z - xMin) / (xMax - xMin) * plotWidth;
+        const y = z => baseline - 145 * Math.exp(-0.5 * z * z);
+
+        let curve = "";
+        for (let i = 0; i <= 200; i++) {
+          const z = xMin + (xMax - xMin) * i / 200;
+          curve += `${i === 0 ? "M" : "L"} ${x(z).toFixed(2)} ${y(z).toFixed(2)} `;
+        }
+
+        let out = `<line x1="${left}" y1="${baseline}" x2="${width-right}" y2="${baseline}" stroke="#aab9b2" stroke-width="1.5"/>`;
+        const bands = [
+          { z: 1.645, color: "#496d91", label: "90%: ±1.645 SE" },
+          { z: 2.576, color: "#c3513c", label: "99%: ±2.576 SE" }
+        ];
+
+        bands.forEach(band => {
+          const path = `M ${x(-band.z)} ${baseline} ` +
+            Array.from({ length: 90 }, (_, i) => {
+              const z = -band.z + 2 * band.z * i / 89;
+              return `L ${x(z).toFixed(2)} ${y(z).toFixed(2)} `;
+            }).join("") +
+            `L ${x(band.z)} ${baseline} Z`;
+          out += `<path d="${path}" fill="${band.color}" fill-opacity=".12"/>`;
+          out += `<line x1="${x(-band.z)}" y1="${y(-band.z)}" x2="${x(-band.z)}" y2="${baseline}" stroke="${band.color}" stroke-width="2" stroke-dasharray="5 4"/>`;
+          out += `<line x1="${x(band.z)}" y1="${y(band.z)}" x2="${x(band.z)}" y2="${baseline}" stroke="${band.color}" stroke-width="2" stroke-dasharray="5 4"/>`;
+        });
+
+        out += `<path d="${curve}" fill="none" stroke="#126c69" stroke-width="3"/>`;
+        out += `<line x1="${x(0)}" y1="${y(0)}" x2="${x(0)}" y2="${baseline}" stroke="#1d2b32" stroke-width="2"/>`;
+        out += `<text x="${x(0)}" y="${baseline + 23}" text-anchor="middle" fill="#586b72" font-size="11" font-family="monospace">estimate</text>`;
+        out += `<text x="${width - right - 5}" y="30" text-anchor="end" fill="#496d91" font-size="12" font-family="sans-serif">90% reaches 1.645 SE</text>`;
+        out += `<text x="${width - right - 5}" y="49" text-anchor="end" fill="#963c2c" font-size="12" font-family="sans-serif">99% reaches 2.576 SE</text>`;
+
+        [-3, -2, -1, 0, 1, 2, 3].forEach(value => {
+          const xx = x(value);
+          out += `<line x1="${xx}" y1="${baseline}" x2="${xx}" y2="${baseline + 6}" stroke="#71847c"/>`;
+          out += `<text x="${xx}" y="${baseline + 22}" text-anchor="middle" fill="#586b72" font-size="10" font-family="monospace">${value > 0 ? "+" : ""}${value} SE</text>`;
+        });
+
+        out += `<text x="${width/2}" y="282" text-anchor="middle" fill="#586b72" font-size="11" font-family="sans-serif">More confidence requires reaching farther into both tails</text>`;
+        svg.innerHTML = out;
+      }
+
+      function drawInterval(svg, mean, lower, upper, label) {
+        const width = 820;
+        const left = 58;
+        const right = 34;
+        const y = 103;
+        const span = Math.max(upper - lower, 1);
+        const min = lower - span * 0.7;
+        const max = upper + span * 0.7;
+        const plotWidth = width - left - right;
+        const x = value => left + (value - min) / (max - min) * plotWidth;
+
+        let out = `<line x1="${left}" y1="${y}" x2="${width-right}" y2="${y}" stroke="#d2ddd7" stroke-width="2"/>`;
+        out += `<line x1="${x(lower)}" y1="${y}" x2="${x(upper)}" y2="${y}" stroke="#126c69" stroke-width="9" stroke-linecap="round"/>`;
+        out += `<line x1="${x(lower)}" y1="${y-17}" x2="${x(lower)}" y2="${y+17}" stroke="#0b504f" stroke-width="3"/>`;
+        out += `<line x1="${x(upper)}" y1="${y-17}" x2="${x(upper)}" y2="${y+17}" stroke="#0b504f" stroke-width="3"/>`;
+        out += `<circle cx="${x(mean)}" cy="${y}" r="9" fill="#dda943" stroke="#1d2b32" stroke-width="2"/>`;
+        out += `<text x="${x(mean)}" y="42" text-anchor="middle" fill="#1d2b32" font-size="14" font-family="sans-serif">sample mean = ${fmt(mean, 2)}</text>`;
+        out += `<text x="${x(lower)}" y="144" text-anchor="middle" fill="#0b504f" font-size="12" font-family="monospace">lower ${fmt(lower, 2)}</text>`;
+        out += `<text x="${x(upper)}" y="144" text-anchor="middle" fill="#0b504f" font-size="12" font-family="monospace">upper ${fmt(upper, 2)}</text>`;
+
+        for (let i = 0; i <= 5; i++) {
+          const value = min + (max - min) * i / 5;
+          const xx = x(value);
+          out += `<line x1="${xx}" y1="${y-5}" x2="${xx}" y2="${y+6}" stroke="#80928b"/>`;
+          out += `<text x="${xx}" y="174" text-anchor="middle" fill="#586b72" font-size="10" font-family="monospace">${fmt(value, 1)}</text>`;
+        }
+        out += `<text x="${width/2}" y="211" text-anchor="middle" fill="#586b72" font-size="12" font-family="sans-serif">${label}</text>`;
+        svg.innerHTML = out;
+      }
+
+      function drawConfidenceCompare(mean, s, n, method) {
+        const svg = $("confidenceCompare");
+        const width = 820;
+        const left = 100;
+        const right = 28;
+        const confs = [0.90, 0.95, 0.99];
+        const colors = ["#496d91", "#126c69", "#c3513c"];
+        const standardError = s / Math.sqrt(n);
+        const criticals = confs.map(conf =>
+          method === "z" ? inverseNormal((1 + conf) / 2) : inverseTCritical(conf, n - 1)
+        );
+        const lows = criticals.map(k => mean - k * standardError);
+        const highs = criticals.map(k => mean + k * standardError);
+        const dataMin = Math.min(...lows);
+        const dataMax = Math.max(...highs);
+        const pad = Math.max((dataMax - dataMin) * 0.18, 1);
+        const min = dataMin - pad;
+        const max = dataMax + pad;
+        const plotWidth = width - left - right;
+        const x = value => left + (value - min) / (max - min) * plotWidth;
+
+        let out = `<line x1="${left}" y1="226" x2="${width-right}" y2="226" stroke="#d2ddd7" stroke-width="2"/>`;
+        confs.forEach((conf, i) => {
+          const y = 54 + i * 69;
+          out += `<text x="17" y="${y+5}" fill="${colors[i]}" font-size="14" font-family="sans-serif" font-weight="700">${Math.round(conf*100)}%</text>`;
+          out += `<line x1="${x(lows[i])}" y1="${y}" x2="${x(highs[i])}" y2="${y}" stroke="${colors[i]}" stroke-width="10" stroke-linecap="round"/>`;
+          out += `<line x1="${x(lows[i])}" y1="${y-13}" x2="${x(lows[i])}" y2="${y+13}" stroke="${colors[i]}" stroke-width="2"/>`;
+          out += `<line x1="${x(highs[i])}" y1="${y-13}" x2="${x(highs[i])}" y2="${y+13}" stroke="${colors[i]}" stroke-width="2"/>`;
+          out += `<circle cx="${x(mean)}" cy="${y}" r="5" fill="#1d2b32"/>`;
+          out += `<text x="${width-right}" y="${y-12}" text-anchor="end" fill="${colors[i]}" font-size="11" font-family="monospace">critical value = ${criticals[i].toFixed(3)}</text>`;
+        });
+
+        for (let i = 0; i <= 5; i++) {
+          const value = min + (max - min) * i / 5;
+          const xx = x(value);
+          out += `<line x1="${xx}" y1="226" x2="${xx}" y2="232" stroke="#80928b"/>`;
+          out += `<text x="${xx}" y="251" text-anchor="middle" fill="#586b72" font-size="10" font-family="monospace">${fmt(value, 1)}</text>`;
+        }
+        svg.innerHTML = out;
+      }
+
+      function updateIntervalExplorer() {
+        const mean = Number($("meanInput").value);
+        const s = Number($("sdInput").value);
+        const n = Number($("nInput").value);
+        const confidence = Number($("confidenceInput").value);
+        const method = $("methodInput").value;
+        const se = s / Math.sqrt(n);
+        const critical = method === "z"
+          ? inverseNormal((1 + confidence) / 2)
+          : inverseTCritical(confidence, n - 1);
+        const me = critical * se;
+        const lower = mean - me;
+        const upper = mean + me;
+        const criticalName = method === "t" ? "t*" : "z*";
+        const dfText = method === "t" ? `, df = n − 1 = ${n - 1}` : "";
+
+        $("meanOutput").textContent = `${mean} min`;
+        $("sdOutput").textContent = `${s} min`;
+        $("nOutput").textContent = String(n);
+        $("calculation").innerHTML =
+          `SE = s / √n = ${s} / √${n} = ${fmt(se, 3)} min<br>` +
+          `${criticalName}${dfText} = ${fmt(critical, 3)}<br>` +
+          `ME = ${criticalName} × SE = ${fmt(critical, 3)} × ${fmt(se, 3)} = ${fmt(me, 3)} min<br>` +
+          `Interval = x̄ ± ME = ${mean} ± ${fmt(me, 3)}<br>` +
+          `= [${fmt(lower, 2)}, ${fmt(upper, 2)}] min`;
+
+        $("seMetric").textContent = `${fmt(se, 3)} min`;
+        $("criticalMetric").textContent = fmt(critical, 3);
+        $("meMetric").textContent = `${fmt(me, 3)} min`;
+        $("lowerMetric").textContent = `${fmt(lower, 2)} min`;
+        $("centerMetric").textContent = `${fmt(mean, 2)} min`;
+        $("upperMetric").textContent = `${fmt(upper, 2)} min`;
+
+        drawInterval(
+          $("intervalChart"),
+          mean,
+          lower,
+          upper,
+          `${Math.round(confidence * 100)}% ${method.toUpperCase()} confidence interval`
+        );
+        $("intervalCaption").textContent =
+          `The interval centers on x̄ = ${mean}. Its half-width is the margin of error, ${fmt(me, 2)} minutes.`;
+        drawConfidenceCompare(mean, s, n, method);
+      }
+
+      function renderCoverage() {
+        const container = $("coverageIllustration");
+        const intervals = [
+          [12,75], [20,83], [16,70], [56,90], [9,67],
+          [18,80], [22,89], [29,96], [7,62], [19,78],
+          [24,84], [11,66], [15,74], [5,42], [25,91],
+          [17,77], [30,94], [8,72], [21,82], [13,68]
+        ];
+        const truth = 50;
+
+        container.innerHTML = "";
+        intervals.forEach((bounds, index) => {
+          const covers = bounds[0] <= truth && truth <= bounds[1];
+          const row = document.createElement("div");
+          row.className = "mini-bar";
+          row.innerHTML =
+            `<strong>Sample ${String(index + 1).padStart(2, "0")}</strong>` +
+            `<span class="mini-track">` +
+            `<span class="mini-line ${covers ? "" : "miss"}" style="left:${bounds[0]}%;width:${bounds[1] - bounds[0]}%"></span>` +
+            `<span class="truth-line" style="left:${truth}%"></span>` +
+            `</span>` +
+            `<span class="mini-status">${covers ? "covers" : "misses"}</span>`;
+          container.appendChild(row);
+        });
+
+        const legend = document.createElement("p");
+        legend.className = "chart-note";
+        legend.innerHTML =
+          `<span style="color:#126c69;font-weight:800">Teal</span> = contains fixed mean &nbsp;·&nbsp; ` +
+          `<span style="color:#c3513c;font-weight:800">Coral</span> = misses fixed mean &nbsp;·&nbsp; ` +
+          `Black vertical marker = μ`;
+        container.appendChild(legend);
+      }
+
+      function seededRandom(seed) {
+        let state = seed >>> 0;
+        return function() {
+          state = (1664525 * state + 1013904223) >>> 0;
+          return state / 4294967296;
+        };
+      }
+
+      function drawHistogram(svg, values) {
+        const width = 820;
+        const height = 330;
+        const left = 58;
+        const right = 20;
+        const top = 18;
+        const bottom = 55;
+        const bins = 26;
+        const min = 0;
+        const max = 5.5;
+        const counts = Array(bins).fill(0);
+
+        values.forEach(value => {
+          const bin = clamp(Math.floor((value - min) / (max - min) * bins), 0, bins - 1);
+          counts[bin]++;
+        });
+
+        const maxCount = Math.max(...counts, 1);
+        const plotWidth = width - left - right;
+        const plotHeight = height - top - bottom;
+        let out = `<line x1="${left}" y1="${top+plotHeight}" x2="${width-right}" y2="${top+plotHeight}" stroke="#aebdb6" stroke-width="1.5"/>`;
+
+        counts.forEach((count, index) => {
+          const barWidth = plotWidth / bins - 2;
+          const x = left + index * plotWidth / bins + 1;
+          const barHeight = count / maxCount * (plotHeight - 8);
+          out += `<rect x="${x}" y="${top+plotHeight-barHeight}" width="${barWidth}" height="${barHeight}" rx="2" fill="#126c69" opacity=".82"/>`;
+        });
+
+        const trueMeanX = left + (1 - min) / (max - min) * plotWidth;
+        out += `<line x1="${trueMeanX}" y1="${top}" x2="${trueMeanX}" y2="${top+plotHeight}" stroke="#c3513c" stroke-width="2" stroke-dasharray="6 5"/>`;
+        out += `<text x="${trueMeanX+6}" y="${top+14}" fill="#963c2c" font-size="11" font-family="sans-serif">population mean = 1</text>`;
+
+        for (let i = 0; i <= 5; i++) {
+          const value = max * i / 5;
+          const x = left + value / max * plotWidth;
+          out += `<line x1="${x}" y1="${top+plotHeight}" x2="${x}" y2="${top+plotHeight+6}" stroke="#80928b"/>`;
+          out += `<text x="${x}" y="${height-25}" text-anchor="middle" fill="#586b72" font-size="11" font-family="monospace">${value.toFixed(1)}</text>`;
+        }
+
+        out += `<text x="${width/2}" y="${height-5}" text-anchor="middle" fill="#586b72" font-size="12" font-family="sans-serif">simulated sample mean</text>`;
+        out += `<text x="18" y="${height/2}" transform="rotate(-90 18 ${height/2})" text-anchor="middle" fill="#586b72" font-size="11" font-family="sans-serif">frequency</text>`;
+        svg.innerHTML = out;
+      }
+
+      function runCLTSimulation() {
+        const n = Number($("simN").value);
+        const repetitions = Number($("simCount").value);
+        $("simNOut").textContent = String(n);
+        $("simCountOut").textContent = String(repetitions);
+
+        const random = seededRandom((Date.now() ^ (n * 92821) ^ repetitions) >>> 0);
+        const means = [];
+
+        for (let repetition = 0; repetition < repetitions; repetition++) {
+          let total = 0;
+          for (let observation = 0; observation < n; observation++) {
+            const u = Math.max(random(), 1e-12);
+            total += -Math.log(u);
+          }
+          means.push(total / n);
+        }
+
+        const average = means.reduce((sum, value) => sum + value, 0) / means.length;
+        const variance = means.reduce((sum, value) => sum + (value - average) ** 2, 0) / (means.length - 1);
+        drawHistogram($("cltChart"), means);
+
+        $("cltSummary").textContent =
+          `Simulation: ${repetitions.toLocaleString()} samples of n = ${n} from a right-skewed exponential population (population mean = 1, population SD = 1). ` +
+          `The simulated sample means have average ${fmt(average, 3)} and SD ${fmt(Math.sqrt(variance), 3)}. ` +
+          `As n grows, their spread is expected to shrink roughly like 1/√n.`;
+      }
+
+      ["meanInput", "sdInput", "nInput", "confidenceInput", "methodInput"].forEach(id => {
+        $(id).addEventListener("input", updateIntervalExplorer);
+        $(id).addEventListener("change", updateIntervalExplorer);
+      });
+
+      ["simN", "simCount"].forEach(id => {
+        $(id).addEventListener("input", runCLTSimulation);
+        $(id).addEventListener("change", runCLTSimulation);
+      });
+
+      $("runSimulation").addEventListener("click", runCLTSimulation);
+
+      drawSECurve();
+      drawCriticalVisual();
+      renderCoverage();
+      updateIntervalExplorer();
+      runCLTSimulation();
+    })();
+  </script>
+</body>
+</html>
